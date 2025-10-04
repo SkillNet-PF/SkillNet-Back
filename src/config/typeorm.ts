@@ -3,7 +3,7 @@ import { config as dotenvConfig } from 'dotenv';
 //import { DataSourceOptions, Migration } from 'typeorm/browser';
 //import { DataSource } from 'typeorm/browser';
 
-dotenvConfig();
+dotenvConfig({path: 'env.development'});
 
 const config = {
   type: 'postgres',
