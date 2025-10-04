@@ -1,16 +1,17 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { SupabaseModule } from './supabase/supabase.module';
-import { DbModule } from '../db/db.module';
-import { PostgresUserRepository } from './repositories/user.repo.postgres';
-import { UserRepository } from './repositories/user.repository';
+import { User } from './entities/user.entity';
+import { AuthRepository } from './auth-repository';
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([User]),
     PassportModule,
     JwtModule.register({
       global: true,
@@ -18,15 +19,14 @@ import { UserRepository } from './repositories/user.repository';
       signOptions: { expiresIn: '1d' },
     }),
     SupabaseModule,
-    DbModule,
   ],
   providers: [
     AuthService,
     JwtStrategy,
-    { provide: UserRepository, useClass: PostgresUserRepository },
+    AuthRepository,
   ],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, AuthRepository],
 })
 export class AuthModule {}
 
