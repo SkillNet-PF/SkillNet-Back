@@ -1,26 +1,45 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ServiceProvider } from './entities/serviceprovider.entity';
 import { CreateServiceproviderDto } from './dto/create-serviceprovider.dto';
 import { UpdateServiceproviderDto } from './dto/update-serviceprovider.dto';
+import { PartialType } from '@nestjs/mapped-types';
 
 @Injectable()
 export class ServiceproviderService {
-  create(createServiceproviderDto: CreateServiceproviderDto) {
-    return 'This action adds a new serviceprovider';
+  constructor(
+    @InjectRepository(ServiceProvider)
+    private readonly providerRepo: Repository<ServiceProvider>,
+  ) {}
+
+  async create(dto: CreateServiceproviderDto): Promise<ServiceProvider> {
+    const provider = this.providerRepo.create(dto);
+    return await this.providerRepo.save(provider);
   }
 
-  findAll() {
-    return `This action returns all serviceprovider`;
+  async findAll(): Promise<ServiceProvider[]> {
+    return await this.providerRepo.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} serviceprovider`;
+  async findOne(id: string): Promise<ServiceProvider> {
+    const provider = await this.providerRepo.findOne({
+      where: { providerId: id },
+    });
+
+    if (!provider) throw new NotFoundException(`Provider with ID ${id} not found`);
+    return provider;
   }
 
-  update(id: number, updateServiceproviderDto: UpdateServiceproviderDto) {
-    return `This action updates a #${id} serviceprovider`;
+  async update(id: string, dto: UpdateServiceproviderDto): Promise<ServiceProvider> {
+    await this.providerRepo.update(id, dto);
+    const updated = await this.providerRepo.findOne({ where: { providerId: id } });
+    if (!updated) throw new NotFoundException(`Provider with ID ${id} not found`);
+    return updated;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} serviceprovider`;
+  async remove(id: string): Promise<void> {
+    const result = await this.providerRepo.delete(id);
+    if (result.affected === 0) throw new NotFoundException(`Provider with ID ${id} not found`);
   }
 }
