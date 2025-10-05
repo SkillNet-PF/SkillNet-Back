@@ -6,7 +6,7 @@ export class LoginDto {
 
   @IsString()
   @IsNotEmpty()
-  externalAuthId!: string; 
+  password!: string; 
 }
 
 
