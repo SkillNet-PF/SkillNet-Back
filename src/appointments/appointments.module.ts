@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
 import { AppointmentsController } from './appointments.controller';
 // import {TypeOrmModule} from '@nestjs/typeorm';
+
 @Module({
   // imports:[TypeOrmModule.forFeature([])],
   controllers: [AppointmentsController],

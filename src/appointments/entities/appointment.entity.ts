@@ -15,10 +15,10 @@ export class Appointment {
     CategoryID: Category;
 
     @Column({
-        type:'varchar',
+        type:'date',
         nullable: false
     })
-    CreationDate: string;
+    CreationDate: Date;
 
     @Column({
         type: 'date',
@@ -40,8 +40,8 @@ export class Appointment {
     Status: Status;
 
     @ManyToOne(()=> Client, (client)=>client.appointments)
-    ClientID: Client;
+    UserClient: Client;
 
     @ManyToOne(()=> Provider, (provider)=> provider.)
-    ProviderID:Provider ;
+    UserProvider:Provider ;
 }
