@@ -4,6 +4,9 @@ import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Appointment } from './entities/appointment.entity';
 import { Repository } from 'typeorm';
+import { User } from 'src/auth/entities/user.entity';
+import { UserRole } from 'src/common/enums/user-role.enum';
+
 
 
 @Injectable()
@@ -12,8 +15,8 @@ export class AppointmentsService {
     @InjectRepository(Appointment)
     private appointmentRepository: Repository<Appointment>,
     
-    // @InjectRepository(User)
-    // private readonly userRepository: Repository<User>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     
   ){}
 
@@ -35,7 +38,6 @@ export class AppointmentsService {
 
   }
 
-  //PREGUNTAR A NACHO SI EN EL TOKEN MANDA SOLO EL UUID DEL USER O ALGUNA INFO EXTRA
   async findUserAppointments(page:number, limit:number, user): Promise<Appointment[]> {
     //definir si el usuario es proveedor o cliente
     const authUser = await this.userRepository.findOneBy({userId: user.userId})
@@ -45,11 +47,11 @@ export class AppointmentsService {
       
       //define si busca los appointments de un cliente o de un provider
     let whereClause = {}; 
-    if (authUser.rol === 'client'){
+    if (authUser.rol === UserRole.client){
       
       whereClause = {UserClient:{UserId : user.userId}}
     }
-    if (authUser.rol === 'provider'){
+    if (authUser.rol === UserRole.provider){
       whereClause = {UserProvider:{userId: user.userId}}
       
     }
