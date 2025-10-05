@@ -22,7 +22,7 @@ export class RegisterDto {
 
   @IsString()
   @IsNotEmpty()
-  externalAuthId!: string;
+  password!: string;
 
   @IsOptional()
   @IsString()
