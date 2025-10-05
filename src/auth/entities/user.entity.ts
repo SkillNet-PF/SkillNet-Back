@@ -34,7 +34,7 @@ export class User {
   })
   rol!: UserRole;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   paymentMethod?: string | null;
 
   @Column({ nullable: true })
