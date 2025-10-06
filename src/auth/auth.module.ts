@@ -15,7 +15,7 @@ import { AuthRepository } from './auth-repository';
     PassportModule,
     JwtModule.register({
       global: true,
-      secret: process.env.JWT_SECRET,
+      secret: process.env.JWT_SECRET || 'dev_secret',
       signOptions: { expiresIn: '1d' },
     }),
     SupabaseModule,
