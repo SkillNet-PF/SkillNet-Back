@@ -1,10 +1,18 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryColumn, Column, BeforeInsert } from 'typeorm';
 import { UserRole } from '../../common/enums/user-role.enum';
+import { randomUUID } from 'crypto';
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn('uuid')
   userId!: string;
+
+  @BeforeInsert()
+  setIdIfMissing(): void {
+    if (!this.userId) {
+      this.userId = randomUUID();
+    }
+  }
 
   @Column({ nullable: true })
   imgProfile?: string;
