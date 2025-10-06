@@ -2,8 +2,9 @@ import { IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } 
 import { UserRole } from '../../common/enums/user-role.enum';
 
 export class RegisterDto {
+  @IsOptional()
   @IsUUID()
-  userId!: string;
+  userId?: string;
 
   @IsOptional()
   @IsString()
@@ -22,7 +23,7 @@ export class RegisterDto {
 
   @IsString()
   @IsNotEmpty()
-  externalAuthId!: string;
+  password!: string;
 
   @IsOptional()
   @IsString()
