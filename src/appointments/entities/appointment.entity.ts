@@ -1,6 +1,8 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import {v4 as uuid} from 'uuid'
 import { Status } from "./status.enum";
+import { Categories } from "./categories.entity";
+import { Serviceprovider } from "src/serviceprovider/serviceprovider/entities/serviceprovider.entity";
 @Entity({
     name: 'appointments'
 })
@@ -10,9 +12,9 @@ export class Appointment {
     @PrimaryGeneratedColumn('uuid')
     AppointmentID: string = uuid();
 
-    @ManyToOne(()=> Categories, (category) => category.appointments)
+    @ManyToOne(()=> Categories)
     @JoinColumn({name: 'category_id'})
-    CategoryID: Category;
+    CategoryID: Categories;
 
     @Column({
         type:'date',
@@ -40,8 +42,10 @@ export class Appointment {
     Status: Status;
 
     @ManyToOne(()=> Client, (client)=>client.appointments)
+    @JoinColumn({name:'Client'})
     UserClient: Client;
 
-    @ManyToOne(()=> Provider, (provider)=> provider.)
-    UserProvider:Provider ;
+    @ManyToOne(()=> Serviceprovider, (provider)=> provider.appointments)
+    @JoinColumn({name:'UserProvider'})
+    UserProvider:Serviceprovider ;
 }
