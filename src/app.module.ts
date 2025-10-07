@@ -5,14 +5,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import typeormConfig from './config/typeorm';
-import { AppointmentsController } from './appointments/appointments.controller';
-import { AppointmentsService } from './appointments/appointments.service';
 import { AppointmentsModule } from './appointments/appointments.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env',
       load: [typeormConfig],
     }),
     TypeOrmModule.forRootAsync({
@@ -23,7 +22,7 @@ import { AppointmentsModule } from './appointments/appointments.module';
     AuthModule,
     AppointmentsModule,
   ],
-  controllers: [AppController , AppointmentsController],
-  providers: [AppService, AppointmentsService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
