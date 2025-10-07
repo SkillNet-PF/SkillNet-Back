@@ -4,8 +4,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { AppointmentsModule } from './appointments/appointments.module';
+import typeormConfig from './config/typeorm';
 import { ClientsModule } from './clients/clients.module';
+import { AppointmentsModule } from './appointments/appointments.module';
 
 @Module({
   imports: [
@@ -17,9 +18,14 @@ import { ClientsModule } from './clients/clients.module';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const host = (configService.get<string>('DB_HOST') || '').trim();
-        const port = parseInt((configService.get<string>('DB_PORT') || '5432').trim(), 10);
+        const port = parseInt(
+          (configService.get<string>('DB_PORT') || '5432').trim(),
+          10,
+        );
         const username = (configService.get<string>('DB_USER') || '').trim();
-        const password = (configService.get<string>('DB_PASSWORD') || '').trim();
+        const password = (
+          configService.get<string>('DB_PASSWORD') || ''
+        ).trim();
         const database = (configService.get<string>('DB_NAME') || '').trim();
         return {
           type: 'postgres',
