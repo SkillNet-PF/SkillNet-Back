@@ -5,6 +5,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import typeormConfig from './config/typeorm';
+import { AppointmentsController } from './appointments/appointments.controller';
+import { AppointmentsService } from './appointments/appointments.service';
+import { AppointmentsModule } from './appointments/appointments.module';
 
 @Module({
   imports: [
@@ -17,8 +20,9 @@ import typeormConfig from './config/typeorm';
       useFactory: (configService: ConfigService) => configService.get('typeorm') || {},
     }),
     AuthModule,
+    AppointmentsModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController , AppointmentsController],
+  providers: [AppService, AppointmentsService],
 })
 export class AppModule {}
