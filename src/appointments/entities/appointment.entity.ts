@@ -2,7 +2,7 @@ import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "t
 import {v4 as uuid} from 'uuid'
 import { Status } from "./status.enum";
 import { Categories } from "./categories.entity";
-import { Serviceprovider } from "src/serviceprovider/serviceprovider/entities/serviceprovider.entity";
+import { ServiceProvider } from "src/serviceprovider/serviceprovider/entities/serviceprovider.entity";
 @Entity({
     name: 'appointments'
 })
@@ -50,7 +50,7 @@ export class Appointment {
     @JoinColumn({name:'Client_id'})
     UserClient: Client;
 
-    @ManyToOne(()=> Serviceprovider, (provider)=> provider.schedule)
+    @ManyToOne(()=> ServiceProvider, (provider)=> provider.schedule)
     @JoinColumn({name:'UserProvider_id'})
-    UserProvider:Serviceprovider ;
+    UserProvider:ServiceProvider ;
 }

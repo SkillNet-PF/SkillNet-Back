@@ -1,7 +1,9 @@
+import { Appointment } from 'src/appointments/entities/appointment.entity';
+import { Categories } from 'src/appointments/entities/categories.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 //import { User } from './user.entity';
-//import { Category } from './category.entity';
-//import { Schedule } from './schedule.entity';
+
+
 
 @Entity('providers')
 export class ServiceProvider {
@@ -27,15 +29,15 @@ export class ServiceProvider {
   @Column('uuid', { nullable: true })
   appoinments: string[];
 
-  /*   @ManyToOne(() => User, user => user.providers, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, user => user.providers, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
   
-    @ManyToOne(() => Category, category => category.providers)
+  @ManyToOne(() => Categories, category => category.ServiceProviders)
   @JoinColumn({ name: 'categoryId' })
-  category: Category;
+  category: Categories;
   
-  @ManyToOne(() => Schedule, schedule => schedule.providers, { nullable: true })
+  @ManyToOne(() => Appointment, schedule => schedule.UserProvider, { nullable: true })
   @JoinColumn({ name: 'scheduleId' })
-  schedule: Schedule; */
+  schedule: Appointment[];
 }
