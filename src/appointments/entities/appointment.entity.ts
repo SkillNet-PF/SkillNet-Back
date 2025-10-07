@@ -14,7 +14,7 @@ export class Appointment {
 
     @ManyToOne(()=> Categories)
     @JoinColumn({name: 'category_id'})
-    CategoryID: Categories;
+    Category: Categories;
 
     @Column({
         type:'date',
@@ -42,10 +42,10 @@ export class Appointment {
     Status: Status;
 
     @ManyToOne(()=> Client, (client)=>client.appointments)
-    @JoinColumn({name:'Client'})
+    @JoinColumn({name:'Client_id'})
     UserClient: Client;
 
     @ManyToOne(()=> Serviceprovider, (provider)=> provider.appointments)
-    @JoinColumn({name:'UserProvider'})
+    @JoinColumn({name:'UserProvider_id'})
     UserProvider:Serviceprovider ;
 }
