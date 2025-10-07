@@ -21,5 +21,5 @@ export class CreateServiceproviderDto {
 
   @IsOptional()
   @IsArray()
-  appointments?: string[]; 
+  appointments?: string[];
 }
