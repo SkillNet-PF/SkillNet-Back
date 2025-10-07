@@ -1,34 +1,35 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, Param, Delete } from '@nestjs/common';
 import { ServiceproviderService } from './serviceprovider.service';
 import { CreateServiceproviderDto } from './dto/create-serviceprovider.dto';
 import { UpdateServiceproviderDto } from './dto/update-serviceprovider.dto';
 
-@Controller('serviceprovider')
+@Controller('serviceproviders')
 export class ServiceproviderController {
-  constructor(private readonly serviceproviderService: ServiceproviderService) {}
+  constructor(
+    private readonly serviceproviderService:ServiceproviderService) {}
 
   @Post()
-  create(@Body() createServiceproviderDto: CreateServiceproviderDto) {
-    return this.serviceproviderService.create(createServiceproviderDto);
+  create(@Body() dto: CreateServiceproviderDto) {
+    return this.serviceproviderService.create(dto);
   }
 
-  @Get()//trae todos los porvedores 
+  @Get()
   findAll() {
     return this.serviceproviderService.findAll();
   }
 
-  @Get(':id')//busca provedor por categoria 
+  @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.serviceproviderService.findOne(+id);
+    return this.serviceproviderService.findOne(id);
   }
 
-  @Put(':id')//actualizar datos del perfil 
-  update(@Param('id') id: string, @Body() updateServiceproviderDto: UpdateServiceproviderDto) {
-    return this.serviceproviderService.update(+id, updateServiceproviderDto);
+  @Put(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateServiceproviderDto) {
+    return this.serviceproviderService.update(id, dto);
   }
 
-  @Delete(':id')// solo admin 
+  @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.serviceproviderService.remove(+id);
+    return this.serviceproviderService.remove(id);
   }
 }
