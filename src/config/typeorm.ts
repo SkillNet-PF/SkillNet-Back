@@ -15,7 +15,7 @@ const config = {
   dropSchema: false, // solo dev
   synchronize: true,
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-  Migration: ['dist/migrations/*{.ts,.js}'],
+  migrations: ['dist/migrations/*{.ts,.js}'],
 };
 
 export default registerAs('typeorm', () => config);
