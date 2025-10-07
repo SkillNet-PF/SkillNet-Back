@@ -32,6 +32,11 @@ export class Appointment {
         type: 'varchar',
         nullable:false
     })
+    hour:string
+    @Column({
+        type: 'varchar',
+        nullable:false
+    })
     Notes: string;
 
     @Column({
@@ -45,7 +50,7 @@ export class Appointment {
     @JoinColumn({name:'Client_id'})
     UserClient: Client;
 
-    @ManyToOne(()=> Serviceprovider, (provider)=> provider.appointments)
+    @ManyToOne(()=> Serviceprovider, (provider)=> provider.schedule)
     @JoinColumn({name:'UserProvider_id'})
     UserProvider:Serviceprovider ;
 }
