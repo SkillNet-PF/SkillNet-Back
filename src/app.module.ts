@@ -5,9 +5,11 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import typeormConfig from './config/typeorm';
+import { ClientsModule } from './clients/clients.module';
 
 @Module({
   imports: [
+    ClientsModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [typeormConfig],

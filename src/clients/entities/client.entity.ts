@@ -1,5 +1,3 @@
-//falta definir las relaciones con provider y subscription, importar las entidades y decoradores de typeorm,y agregar validaciones y decoradores de swagger.
-
 import { UserRole } from 'src/common/enums/user-role.enum';
 import {
   Entity,
@@ -30,7 +28,7 @@ export class Client {
   name: string;
 
   @Column({
-    type: 'string',
+    type: 'varchar',
     length: 10, // YYYY-MM-DD is 10 characters
     nullable: true,
     comment: 'Formato de fecha: YYYY-MM-DD',
@@ -89,4 +87,8 @@ export class Client {
   // @ManyToOne(() => Provider, (provider) => provider.clients)
   // @JoinColumn({ name: 'provider_id' })
   // provider?: Provider;
+
+  // @ManyToOne(() => Appointment, (appointment) => appointment.clients)
+  // @JoinColumn({ name: 'appointment_id' })
+  // appointment?: Appointment;
 }

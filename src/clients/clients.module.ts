@@ -1,11 +1,14 @@
-//falta importar decoradores de nestjs, el service y el controller, agregar repositorio typeorm y el modelo Client, exportar el módulo, configurar el módulo para inyectar el servicio y el controller, y agregar el repositorio al array de providers
-
 import { Module } from '@nestjs/common';
 import { ClientsService } from './clients.service';
 import { ClientsController } from './clients.controller';
+import { ClientsRepository } from './clients.repository';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Client } from './entities/client.entity';
 
 @Module({
+  imports: [TypeOrmModule.forFeature([Client])],
   controllers: [ClientsController],
-  providers: [ClientsService],
+  providers: [ClientsService, ClientsRepository],
+  exports: [ClientsService, ClientsRepository],
 })
 export class ClientsModule {}

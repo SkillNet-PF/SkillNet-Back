@@ -14,7 +14,6 @@ export class UpdateClientDto extends PartialType(
   OmitType(RegisterDto, [
     'userId',
     'email',
-    'externalAuthId',
     'rol',
     'isActive',
     'paymentMethod',
