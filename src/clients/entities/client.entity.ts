@@ -4,15 +4,24 @@ import { UserRole } from 'src/common/enums/user-role.enum';
 import {
   Entity,
   Column,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   ManyToOne,
   JoinColumn,
+  BeforeInsert,
 } from 'typeorm';
+import { randomUUID } from 'crypto';
 
 @Entity({ name: 'CLIENTS' })
 export class Client {
-  @PrimaryGeneratedColumn('uuid')
-  clientId: string;
+  @PrimaryColumn('uuid')
+  clientId!: string;
+
+  @BeforeInsert()
+  setIdIfMissing(): void {
+    if (!this.clientId) {
+      this.clientId = randomUUID();
+    }
+  }
 
   //La imagen se guardará en cloudinary o similar
   @Column({
@@ -30,12 +39,11 @@ export class Client {
   name: string;
 
   @Column({
-    type: 'string',
-    length: 10, // YYYY-MM-DD is 10 characters
+    type: 'date',
     nullable: true,
-    comment: 'Formato de fecha: YYYY-MM-DD',
+    comment: 'Fecha de nacimiento',
   })
-  birthDate: string;
+  birthDate?: Date;
 
   @Column({
     type: 'varchar',
