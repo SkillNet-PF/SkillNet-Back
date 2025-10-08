@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -44,6 +44,7 @@ export class AppointmentsService {
 
     if (!authUser) throw new NotFoundException('user not found')
     
+    if (authUser.rol != user.rol) throw new BadRequestException('bad request')
       
       //define si busca los appointments de un cliente o de un provider
     let whereClause = {}; 

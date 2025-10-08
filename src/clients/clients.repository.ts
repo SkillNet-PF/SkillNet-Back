@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 export class ClientsRepository {
   constructor(
     @InjectRepository(Client) private clientsRepository: Repository<Client>,
+
   ) {}
 
   //traer todos los perfiles de clientes (solo para admin) y paginar
@@ -20,7 +21,7 @@ export class ClientsRepository {
     });
     return {
       clients: clients.map(
-        ({ idExternalPassword, ...clientWithoutPassword }) =>
+        ({ externalAuthId, ...clientWithoutPassword }) =>
           clientWithoutPassword,
       ),
       totalClients,
