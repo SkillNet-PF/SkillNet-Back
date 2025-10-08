@@ -1,19 +1,13 @@
-import { Column, Entity, PrimaryColumn, BeforeInsert } from "typeorm";
-import { randomUUID } from 'crypto'
+import { Column, Entity, PrimaryColumn, OneToMany, JoinColumn } from "typeorm";
+import { ServiceProvider } from "src/serviceprovider/serviceprovider/entities/serviceprovider.entity";
+import {v4 as uuid} from 'uuid'
 
 @Entity({
     name: 'categories'
 })
 export class Categories{
     @PrimaryColumn('uuid')
-    CategoryID!: string;
-
-    @BeforeInsert()
-    setIdIfMissing(): void {
-        if (!this.CategoryID) {
-            this.CategoryID = randomUUID();
-        }
-    }
+    CategoryID: string = uuid()
 
     @Column({
         type:'varchar',
@@ -21,4 +15,10 @@ export class Categories{
         nullable: false
     })
     Name:string;
+
+    @OneToMany(()=>ServiceProvider, (serviceProvider)=> serviceProvider.category)
+    @JoinColumn({name: 'serviceProviders'})
+    ServiceProviders: ServiceProvider[]
+    
+
 }

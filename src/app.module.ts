@@ -11,7 +11,7 @@ import { AppointmentsModule } from './appointments/appointments.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: '.env.development',
       load: [typeormConfig],
     }),
     TypeOrmModule.forRootAsync({

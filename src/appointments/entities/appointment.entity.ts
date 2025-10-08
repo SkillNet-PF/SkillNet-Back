@@ -1,9 +1,10 @@
-import { Column, Entity, PrimaryColumn, BeforeInsert } from "typeorm";
-import { randomUUID } from 'crypto'
+import { Column, Entity, PrimaryColumn, ManyToOne, JoinColumn } from "typeorm";
 import { Client } from "src/clients/entities/client.entity";
 import { Status } from "./status.enum";
 import { Categories } from "./categories.entity";
 import { ServiceProvider } from "src/serviceprovider/serviceprovider/entities/serviceprovider.entity";
+import {v4 as uuid} from 'uuid'
+
 @Entity({
     name: 'appointments'
 })
@@ -11,17 +12,11 @@ import { ServiceProvider } from "src/serviceprovider/serviceprovider/entities/se
 export class Appointment {
 
     @PrimaryColumn('uuid')
-    AppointmentID!: string;
+    AppointmentID: string = uuid()
 
-    @BeforeInsert()
-    setIdIfMissing(): void {
-        if (!this.AppointmentID) {
-            this.AppointmentID = randomUUID();
-        }
-    }
-
-    @Column({ type: 'uuid', name: 'category_id', nullable: false })
-    CategoryId: string;
+   
+    @ManyToOne(()=>Categories, { eager: true, nullable: false })
+    Category: Categories;
 
     @Column({
         type:'date',
@@ -53,10 +48,11 @@ export class Appointment {
     })
     Status: Status;
 
-    @Column({ type: 'uuid', name: 'Client_id', nullable: false })
-    UserClientId: string;
+    @ManyToOne(()=>Client)
+    UserClient: Client;
 
-    @ManyToOne(()=> Serviceprovider, (provider)=> provider.schedule)
+    @ManyToOne(()=> ServiceProvider, (provider)=> provider.schedule)
     @JoinColumn({name:'UserProvider_id'})
-    UserProvider:Serviceprovider ;
+    UserProvider:ServiceProvider;
+    
 }
