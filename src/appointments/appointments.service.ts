@@ -48,17 +48,14 @@ export class AppointmentsService {
       //define si busca los appointments de un cliente o de un provider
     let whereClause = {}; 
     if (authUser.rol === UserRole.client){
-      
-      whereClause = {UserClient:{UserId : user.userId}}
+      whereClause = { UserClientId: user.userId }
     }
     if (authUser.rol === UserRole.provider){
-      whereClause = {UserProvider:{userId: user.userId}}
-      
+      whereClause = { UserProviderId: user.userId }
     }
 
     const appointments :Appointment[] = await this.appointmentRepository.find({
       where: whereClause,
-      relations:{UserClient:true, UserProvider:{Category:true}},
       order: {AppointmentDate:'DESC'}
     })
     
