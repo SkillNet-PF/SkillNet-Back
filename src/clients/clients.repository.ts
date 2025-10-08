@@ -14,7 +14,6 @@ export class ClientsRepository {
     @InjectRepository(Client) private clientsRepository: Repository<Client>,
   ) {}
 
-  //traer todos los perfiles de clientes (solo para admin), paginar y filtrar por nombre, email o por cliente o provider
   async getAllClients(page: number, limit: number, filters?: ClientFilters) {
     const skip = (page - 1) * limit;
     const [clients, totalClients] = await this.clientsRepository.findAndCount({
@@ -51,9 +50,7 @@ export class ClientsRepository {
     return clientWithoutSensitiveData;
   }
 
-  async updateClientProfile(id: string, updateClientDto: any) {
-    return `actualizará el perfil del cliente #${id}`;
-  }
+  async updateClientProfile(id: string, updateClientDto: any) {}
 
   async deleteClientProfile(id: string) {
     return `borrará el perfil del cliente #${id}`;

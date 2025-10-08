@@ -140,7 +140,7 @@ export class ClientsController {
   })
   getClientProfile(
     @Param('id', ParseUUIDPipe) id: string,
-    @Req() req: AuthenticatedRequest, //Esto es como si tuviera
+    @Req() req: AuthenticatedRequest,
   ) {
     return this.clientsService.getClientProfile(id, req.user);
   }
