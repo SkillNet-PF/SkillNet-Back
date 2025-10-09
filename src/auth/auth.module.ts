@@ -8,6 +8,10 @@ import { JwtStrategy } from './jwt.strategy';
 import { SupabaseModule } from './supabase/supabase.module';
 import { User } from './entities/user.entity';
 import { AuthRepository } from './auth-repository';
+<<<<<<< HEAD
+=======
+// OIDC guard moved to src/guards; no import/export here
+>>>>>>> origin/main
 
 @Module({
   imports: [

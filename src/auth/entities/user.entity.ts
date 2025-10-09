@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Entity, PrimaryColumn, Column, BeforeInsert } from 'typeorm';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { randomUUID } from 'crypto';
@@ -13,6 +14,18 @@ export class User {
       this.userId = randomUUID();
     }
   }
+=======
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, TableInheritance } from 'typeorm';
+import { UserRole } from '../../common/enums/user-role.enum';
+import {v4 as uuid} from 'uuid'
+
+
+@Entity('users')
+@TableInheritance({ column: { type: 'enum', name: 'rol' } })
+export abstract class User {
+  @PrimaryGeneratedColumn('uuid')
+  userId: string = uuid()
+>>>>>>> origin/main
 
   @Column({ nullable: true })
   imgProfile?: string;
@@ -42,6 +55,7 @@ export class User {
   })
   rol!: UserRole;
 
+<<<<<<< HEAD
   @Column({ type: 'text', nullable: true })
   paymentMethod?: string | null;
 
@@ -51,6 +65,8 @@ export class User {
   @Column({ nullable: true })
   providerId?: string;
 
+=======
+>>>>>>> origin/main
   @Column({ default: true })
   isActive!: boolean;
 }

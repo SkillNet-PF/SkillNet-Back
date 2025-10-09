@@ -23,3 +23,4 @@ export class CreateServiceproviderDto {
   @IsArray()
   appointments?: string[];
 }
+export class CreateServiceproviderDto {}

@@ -1,22 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-//import { User } from './user.entity';
-//import { Category } from './category.entity';
-//import { Schedule } from './schedule.entity';
+import { Appointment } from 'src/appointments/entities/appointment.entity';
+import { Categories } from 'src/appointments/entities/categories.entity';
+import { User } from 'src/auth/entities/user.entity';
+import { Column, ManyToOne, JoinColumn, ChildEntity } from 'typeorm';
 
-@Entity('providers')
-export class ServiceProvider {
 
-  @PrimaryGeneratedColumn('uuid')
-  providerId: string;
 
-  @Column('uuid')
-  userId: string;
+@ChildEntity('providers')
+export class ServiceProvider extends User {
 
   @Column('text', { nullable: true })
   bio: string;
-
-  @Column('uuid')
-  categoryId: string;
 
   @Column('simple-array', { nullable: true })
   dias: string[]; // ejemplo: ['lunes', 'martes']
@@ -24,18 +17,11 @@ export class ServiceProvider {
   @Column('simple-array', { nullable: true })
   horarios: string[]; // ejemplo: ['09:00', '14:00']
 
-  @Column('uuid', { nullable: true })
-  appoinments: string[];
-
-  /*   @ManyToOne(() => User, user => user.providers, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
-  user: User;
-  
-    @ManyToOne(() => Category, category => category.providers)
+  @ManyToOne(() => Categories, category => category.ServiceProviders)
   @JoinColumn({ name: 'categoryId' })
-  category: Category;
+  category: Categories;
   
-  @ManyToOne(() => Schedule, schedule => schedule.providers, { nullable: true })
+  @ManyToOne(() => Appointment, schedule => schedule.UserProvider, { nullable: true })
   @JoinColumn({ name: 'scheduleId' })
-  schedule: Schedule; */
+  schedule: Appointment[];
 }
