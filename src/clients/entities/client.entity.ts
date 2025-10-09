@@ -25,9 +25,9 @@ export class Client extends User {
   })
   paymentMethod?: string;
 
-  @ManyToOne(()=> suscriptions)
-  @JoinColumn({name: 'suscription'})
-  Suscrption:suscriptions;
+  @ManyToOne(() => suscriptions)
+  @JoinColumn({ name: 'suscriptionId' })
+  suscription?: suscriptions;
 
   @Column()
   ServicesLeft: number;
