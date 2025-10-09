@@ -43,8 +43,33 @@ export class ClientsService {
     return this.clientsRepository.getClientProfile(id);
   }
 
-  async updateClientProfile(id: string, updateClientDto: UpdateClientDto) {
-    return `actualizará el perfil del cliente #${id}`;
+  async updateClientProfile(
+    id: string,
+    updateClientDto: UpdateClientDto,
+    user?: AuthenticatedClient,
+  ) {
+    if (user && user.rol === UserRole.client && user.userId !== id) {
+      throw new ForbiddenException('No se puede modificar este perfil');
+    }
+
+    if (updateClientDto.newPassword && !updateClientDto.currentPassword) {
+      throw new ForbiddenException(
+        'La contraseña actual es requerida para cambiar la contraseña',
+      );
+    }
+
+    if (updateClientDto.newPassword) {
+      const clientData = await this.clientsRepository.getClientProfile(id);
+
+      if (!clientData) {
+        throw new NotFoundException('Cliente no encontrado');
+      }
+    }
+
+    //! ----------------------------------------------------------------------
+    //* TERMINAR LOGICA DE CAMBIO DE CONTRASEÑA CON SUPABASE Y CON DB LOCAL
+    //* PREGUNTAR SI SOLO USAREMOS SUPABASE O DB LOCAL + SUPABASE
+    //! ----------------------------------------------------------------------
   }
 
   async deleteClientProfile(id: string) {

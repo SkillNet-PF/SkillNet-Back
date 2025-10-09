@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Client } from './entities/client.entity';
 import { Repository } from 'typeorm';
 import { ClientFilters } from './interfaces/client-filter';
+import { UpdateClientDto } from './dto/update-client.dto';
 
 @Injectable()
 export class ClientsRepository {
@@ -50,7 +51,24 @@ export class ClientsRepository {
     return clientWithoutSensitiveData;
   }
 
-  async updateClientProfile(id: string, updateClientDto: any) {}
+  //El cliente puede actualizar sus datos excepto algunos campos, pero solo él mismo o un admin
+  async updateClientProfile(id: string, updateClientDto: UpdateClientDto) {
+    const client = await this.clientsRepository.findOne({
+      where: { clientId: id },
+    });
+
+    if (!client) throw new NotFoundException('Cliente no encontrado');
+
+    const updatedClient = await this.clientsRepository.save({
+      ...client,
+      ...updateClientDto,
+    });
+
+    const { idExternalPassword, paymentMethod, ...clientWithoutSensitiveInfo } =
+      updatedClient;
+
+    return clientWithoutSensitiveInfo;
+  }
 
   async deleteClientProfile(id: string) {
     return `borrará el perfil del cliente #${id}`;
