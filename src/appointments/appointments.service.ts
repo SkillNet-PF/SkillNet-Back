@@ -6,6 +6,8 @@ import { Appointment } from './entities/appointment.entity';
 import { Repository } from 'typeorm';
 import { User } from 'src/auth/entities/user.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { Client } from 'src/clients/entities/client.entity';
+import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 
 
 
@@ -17,13 +19,26 @@ export class AppointmentsService {
     
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+
+    @InjectRepository(Client)
+    private readonly clientRepository: Repository<Client>,
+
+    @InjectRepository(ServiceProvider)
+    private readonly providerRepository: Repository<ServiceProvider>
     
   ){}
 
-  async createAppointment(createAppointmentDto: CreateAppointmentDto) {
-    //extraer el id del usuario del token 
-    //buscar el usuario
-    //verificar que tenga servicios disponibles
+  async createAppointment(createAppointmentDto: CreateAppointmentDto, user) {
+    
+    const authUser = await this.clientRepository.findOneBy({userId: user.userId})
+
+    if(!authUser) throw new NotFoundException('user not found')
+
+    if (authUser.rol !== UserRole.client) throw new BadRequestException('Must be a client to create an appointment')
+
+    if (authUser.ServicesLeft === 0) throw new BadRequestException('there are no services left to make this appointment')
+    
+    
 
     //verificar que la nota exista
     //verificar que la categoria solicitada exista
