@@ -5,8 +5,6 @@ import { SwaggerModule } from '@nestjs/swagger/dist/swagger-module';
 import { DocumentBuilder } from '@nestjs/swagger';
 import { createAuth0Middleware } from './config/auth.config';
 
-
-
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(createAuth0Middleware());
@@ -17,7 +15,7 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
-  
+
   const configSwagger = new DocumentBuilder()
     .setTitle('SkillNet API')
     .setDescription('Marketplace de servicios')

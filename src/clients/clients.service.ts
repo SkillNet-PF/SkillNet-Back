@@ -64,15 +64,45 @@ export class ClientsService {
       if (!clientData) {
         throw new NotFoundException('Cliente no encontrado');
       }
+
+      // TODO: Validar contraseña actual con Supabase Auth
+      // const isValidPassword = await this.validatePasswordWithSupabase(
+      //   clientData.email,
+      //   updateClientDto.currentPassword
+      // );
+
+      // SIMULACIÓN mientras tanto
+      if (updateClientDto.currentPassword !== 'currentPassword123') {
+        throw new ForbiddenException('La contraseña actual es incorrecta');
+      }
+
+      // TODO: Actualizar contraseña en Supabase Auth
+      // await this.updatePasswordInSupabase(updateClientDto.newPassword);
+
+      console.log('🔧 SIMULACIÓN: Contraseña actualizada en Supabase Auth');
+
+      // Limpiar campos de contraseña del DTO (NO se guardan en PostgreSQL)
+      const { currentPassword, newPassword, ...updateData } = updateClientDto;
+      updateClientDto = updateData as UpdateClientDto;
     }
 
-    //! ----------------------------------------------------------------------
-    //* TERMINAR LOGICA DE CAMBIO DE CONTRASEÑA CON SUPABASE Y CON DB LOCAL
-    //* PREGUNTAR SI SOLO USAREMOS SUPABASE O DB LOCAL + SUPABASE
-    //! ----------------------------------------------------------------------
+    // Actualizar solo datos de perfil en PostgreSQL
+    return this.clientsRepository.updateClientProfile(id, updateClientDto);
   }
 
-  async deleteClientProfile(id: string) {
-    return `borrará el perfil del cliente #${id}`;
+  async deleteClientProfile(id: string, user?: AuthenticatedClient) {
+    // Verificar permisos: el cliente puede eliminar su propio perfil o un admin puede eliminar cualquier perfil
+    if (user) {
+      const isOwner = user.userId === id;
+      const isAdmin = user.rol === UserRole.admin;
+
+      if (!isOwner && !isAdmin) {
+        throw new ForbiddenException(
+          'Solo puedes eliminar tu propio perfil o ser administrador',
+        );
+      }
+    }
+
+    return this.clientsRepository.deleteClientProfile(id);
   }
 }

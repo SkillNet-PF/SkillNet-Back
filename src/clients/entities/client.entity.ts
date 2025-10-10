@@ -1,5 +1,5 @@
 import { User } from 'src/auth/entities/user.entity';
-import { suscriptions } from 'src/suscirption/entities/suscription.entity';
+// import { suscriptions } from 'src/suscirption/entities/suscription.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { Column, ChildEntity, ManyToOne, JoinColumn } from 'typeorm';
 
@@ -69,10 +69,10 @@ export class Client extends User {
   })
   paymentMethod?: string;
 
-  // Relación con suscripciones
-  @ManyToOne(() => suscriptions)
-  @JoinColumn({ name: 'suscriptionId' })
-  suscription?: suscriptions;
+  // Relación con suscripciones (temporalmente comentada para pruebas)
+  // @ManyToOne(() => suscriptions)
+  // @JoinColumn({ name: 'suscriptionId' })
+  // suscription?: suscriptions;
 
   @Column()
   ServicesLeft: number;

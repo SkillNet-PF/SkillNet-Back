@@ -51,10 +51,9 @@ export class ClientsRepository {
     return clientWithoutSensitiveData;
   }
 
-  //El cliente puede actualizar sus datos excepto algunos campos, pero solo él mismo o un admin
   async updateClientProfile(id: string, updateClientDto: UpdateClientDto) {
     const client = await this.clientsRepository.findOne({
-      where: { clientId: id },
+      where: { userId: id },
     });
 
     if (!client) throw new NotFoundException('Cliente no encontrado');
@@ -64,13 +63,29 @@ export class ClientsRepository {
       ...updateClientDto,
     });
 
-    const { idExternalPassword, paymentMethod, ...clientWithoutSensitiveInfo } =
+    const { externalAuthId, paymentMethod, ...clientWithoutSensitiveInfo } =
       updatedClient;
 
     return clientWithoutSensitiveInfo;
   }
 
   async deleteClientProfile(id: string) {
-    return `borrará el perfil del cliente #${id}`;
+    // Verificar que el cliente existe
+    const client = await this.clientsRepository.findOne({
+      where: { userId: id },
+    });
+
+    if (!client) throw new NotFoundException('Cliente no encontrado');
+
+    // Soft delete: marcar como inactivo en lugar de eliminar completamente
+    const deletedClient = await this.clientsRepository.save({
+      ...client,
+      isActive: false,
+    });
+
+    return {
+      message: 'Cliente desactivado exitosamente',
+      clientId: deletedClient.userId,
+    };
   }
 }

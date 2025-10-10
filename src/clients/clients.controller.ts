@@ -214,7 +214,10 @@ export class ClientsController {
     status: 404,
     description: 'Cliente no encontrado',
   })
-  deleteClientProfile(@Param('id', ParseUUIDPipe) id: string) {
-    return this.clientsService.deleteClientProfile(id);
+  deleteClientProfile(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.clientsService.deleteClientProfile(id, req.user);
   }
 }
