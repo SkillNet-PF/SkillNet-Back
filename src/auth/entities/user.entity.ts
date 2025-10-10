@@ -1,13 +1,18 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, TableInheritance } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  TableInheritance,
+} from 'typeorm';
 import { UserRole } from '../../common/enums/user-role.enum';
-import {v4 as uuid} from 'uuid'
-
+import { v4 as uuid } from 'uuid';
 
 @Entity('users')
 @TableInheritance({ column: { type: 'enum', name: 'rol' } })
 export abstract class User {
   @PrimaryGeneratedColumn('uuid')
-  userId: string = uuid()
+  userId: string = uuid();
 
   @Column({ nullable: true })
   imgProfile?: string;

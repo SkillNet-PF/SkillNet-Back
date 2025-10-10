@@ -7,60 +7,6 @@ import { Column, ChildEntity, ManyToOne, JoinColumn } from 'typeorm';
 export class Client extends User {
   // Hereda de User: userId, imgProfile, name, birthDate, email, externalAuthId, address, phone, rol, isActive
 
-  // Campos específicos de Client (comentamos los duplicados por herencia):
-
-  // @Column({
-  //   type: 'varchar',
-  //   default: 'https://res.cloudinary.com/dzcmadjlq/image/upload/v1696118476/default-profile_qx1r4r.png',
-  // })
-  // imgProfile: string; // Ya está en User
-
-  // @Column({
-  //   type: 'varchar',
-  //   length: 100,
-  //   unique: true,
-  // })
-  // name: string; // Ya está en User
-
-  // @Column({
-  //   type: 'varchar',
-  //   length: 10,
-  //   nullable: true,
-  //   comment: 'Formato de fecha: YYYY-MM-DD',
-  // })
-  // birthDate: string; // Ya está en User
-
-  // @Column({
-  //   type: 'varchar',
-  //   unique: true,
-  //   length: 100,
-  // })
-  // email: string; // Ya está en User
-
-  // @Column('uuid')
-  // idExternalPassword: string; // En User es externalAuthId
-
-  // @Column({
-  //   type: 'varchar',
-  //   length: 200,
-  // })
-  // address: string; // Ya está en User
-
-  // @Column({
-  //   type: 'varchar',
-  //   unique: true,
-  // })
-  // phone: string; // Ya está en User
-
-  // @Column({
-  //   type: 'enum',
-  //   enum: UserRole,
-  //   default: UserRole.client,
-  // })
-  // role: string; // En User es rol
-
-  // Campos específicos de Client (hereda userId, imgProfile, name, birthDate, email, externalAuthId, address, phone, rol, isActive de User)
-
   //Datos de tarjeta se guardarán en un servicio externo como Stripe o similar
   @Column({
     type: 'varchar',
@@ -75,21 +21,18 @@ export class Client extends User {
   // suscription?: suscriptions;
 
   @Column()
-  ServicesLeft: number;
+  servicesLeft: number;
 
   @Column()
-  StartDate: Date;
+  startDate: Date;
 
   @Column()
-  EndDate: Date;
+  endDate: Date;
 
   @Column()
-  PaymentStatus: boolean;
+  paymentStatus: boolean;
 
-  // Relaciones futuras (comentadas)
-  // @ManyToOne(() => Provider, (provider) => provider.clients)
-  // @JoinColumn({ name: 'provider_id' })
-  // provider?: Provider;
+  // Relación con citas (temporalmente comentada para pruebas)
 
   // @ManyToOne(() => Appointment, (appointment) => appointment.clients)
   // @JoinColumn({ name: 'appointment_id' })
