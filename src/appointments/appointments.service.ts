@@ -8,6 +8,7 @@ import { User } from 'src/auth/entities/user.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { Client } from 'src/clients/entities/client.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
+import { Categories } from './entities/categories.entity';
 
 
 
@@ -24,7 +25,10 @@ export class AppointmentsService {
     private readonly clientRepository: Repository<Client>,
 
     @InjectRepository(ServiceProvider)
-    private readonly providerRepository: Repository<ServiceProvider>
+    private readonly providerRepository: Repository<ServiceProvider>,
+
+    @InjectRepository(Categories)
+    private readonly categoryRepository: Repository<Categories>
     
   ){}
 
@@ -38,13 +42,39 @@ export class AppointmentsService {
 
     if (authUser.ServicesLeft === 0) throw new BadRequestException('there are no services left to make this appointment')
     
-    
+    const {category, appointmentDate, hour, notes, provider} = createAppointmentDto
 
-    //verificar que la nota exista
-    //verificar que la categoria solicitada exista
-    //verificar que la categoria solicitada este contenida dentro de las habilitadas
-    //verificar que el proveedor exista
-    //verificar que el proveedor tenga la categoria solicitada
+    if (!category || !appointmentDate || !hour || !notes || !provider) throw new BadRequestException('all required fields must be complete')
+
+    const categoryFound = await this.categoryRepository.findOneBy({Name: category})
+    const providerFound = await this.providerRepository.findOne({
+      where: {name: provider}, 
+      relations:{category: true, schedule:true}
+    })
+
+    if (!categoryFound) throw new NotFoundException('Category not found')
+    if (!providerFound) throw new NotFoundException('Provider not found')
+
+    if (providerFound.category !== categoryFound) throw new BadRequestException(`the provider does not have the category ${category}`)
+   
+    const day = appointmentDate.getDay()
+
+    const verifprovider:ServiceProvider = this.providerRepository
+    .createQueryBuilder('provider')
+    .leftJoinAndSelect('provider.appointments', 'appointment')
+    .where('provider.category = :category', { categoryFound })
+    .andWhere(':day = ANY (provider.workDays)', { day })
+    .andWhere(':hour = ANY (provider.workHours)', { hour })
+    .andWhere(qb => {
+      const subQuery = qb.subQuery()
+        .select('a.id')
+        .from('appointments', 'a')
+        .where('a."providerId" = provider.id')
+        .andWhere('a."AppointmentDate" = :appointmentDate', { appointmentDate })
+        .andWhere('a."AppointmentHour" = :hour', { hour })
+        .getQuery();
+      return `provider.id NOT IN (${subQuery})`;
+    })
     //verificar que el proveedor no tenga ordenes emitidas en esa fecha y horario
     
     //CREACION DEL APPOINTMENT
