@@ -10,6 +10,7 @@ import { AppointmentsModule } from './appointments/appointments.module';
 
 @Module({
   imports: [
+    ClientsModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
