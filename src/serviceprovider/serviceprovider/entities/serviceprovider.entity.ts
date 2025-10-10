@@ -3,11 +3,14 @@ import { Categories } from 'src/appointments/entities/categories.entity';
 import { User } from 'src/auth/entities/user.entity';
 import { Column, ManyToOne, JoinColumn, ChildEntity } from 'typeorm';
 
+// ===== CÓDIGO ORIGINAL (COMENTADO PARA ROLLBACK) =====
+// @ChildEntity('providers')
+// ===== FIN CÓDIGO ORIGINAL =====
 
-
-@ChildEntity('providers')
+// ===== NUEVA CONFIGURACIÓN PARA HERENCIA =====
+@ChildEntity('provider') // Especificar valor explícito del discriminador
+// ===== FIN NUEVA CONFIGURACIÓN =====
 export class ServiceProvider extends User {
-
   @Column('text', { nullable: true })
   bio: string;
 
@@ -17,11 +20,13 @@ export class ServiceProvider extends User {
   @Column('simple-array', { nullable: true })
   horarios: string[]; // ejemplo: ['09:00', '14:00']
 
-  @ManyToOne(() => Categories, category => category.ServiceProviders)
+  @ManyToOne(() => Categories, (category) => category.ServiceProviders)
   @JoinColumn({ name: 'categoryId' })
   category: Categories;
-  
-  @ManyToOne(() => Appointment, schedule => schedule.UserProvider, { nullable: true })
+
+  @ManyToOne(() => Appointment, (schedule) => schedule.UserProvider, {
+    nullable: true,
+  })
   @JoinColumn({ name: 'scheduleId' })
   schedule: Appointment[];
 }

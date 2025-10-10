@@ -35,7 +35,6 @@ interface AuthenticatedRequest extends Request {
   user: AuthenticatedClient;
 }
 
-// @ApiTags('Clients')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('clients')

@@ -8,6 +8,7 @@ import {
   IsUrl,
   MinLength,
 } from 'class-validator';
+import { RegisterDto } from 'src/auth/dto/register.dto';
 
 export class CreateClientDto {
   @ApiProperty({

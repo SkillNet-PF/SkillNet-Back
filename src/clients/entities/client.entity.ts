@@ -3,7 +3,13 @@ import { User } from 'src/auth/entities/user.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { Column, ChildEntity, ManyToOne, JoinColumn } from 'typeorm';
 
-@ChildEntity({ name: 'CLIENTS' })
+// ===== CÓDIGO ORIGINAL (COMENTADO PARA ROLLBACK) =====
+// @ChildEntity({ name: 'CLIENTS' })
+// ===== FIN CÓDIGO ORIGINAL =====
+
+// ===== NUEVA CONFIGURACIÓN PARA HERENCIA =====
+@ChildEntity('client') // Especificar valor explícito del discriminador
+// ===== FIN NUEVA CONFIGURACIÓN =====
 export class Client extends User {
   // Hereda de User: userId, imgProfile, name, birthDate, email, externalAuthId, address, phone, rol, isActive
 

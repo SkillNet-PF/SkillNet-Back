@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -10,14 +11,26 @@ import { ClientFilters } from './interfaces/client-filter';
 import { Not } from 'typeorm';
 import { AuthenticatedClient } from './interfaces/authenticated-client';
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ClientsService {
-  constructor(private clientsRepository: ClientsRepository) {}
+  private supabase: SupabaseClient;
+
+  constructor(
+    private clientsRepository: ClientsRepository,
+    private configService: ConfigService,
+  ) {
+    this.supabase = createClient(
+      this.configService.get<string>('SUPABASE_URL') || '',
+      this.configService.get<string>('SUPABASE_ANON_KEY') || '',
+    );
+  }
 
   async getAllClients(page: number, limit: number, filters?: ClientFilters) {
-    const validPage = Math.max(1, page); //sintaxis: .max(valor1, valor2) - Devuelve el mayor de los dos
-    const validLimit = Math.min(Math.max(1, limit), 100); //sintaxis: .min(valor1, valor2) - Devuelve el menor(rango entre 1 y 100).
+    const validPage = Math.max(1, page);
+    const validLimit = Math.min(Math.max(1, limit), 100); //
 
     const result = await this.clientsRepository.getAllClients(
       validPage,
@@ -26,12 +39,11 @@ export class ClientsService {
     );
 
     return {
-      success: true, // Indica que la operación fue exitosa
-      data: result, // Datos de los clientes
+      success: true,
+      data: result,
       pagination: {
-        // Información de paginación
-        currentPage: validPage, // Página actual
-        usersPerPage: validLimit, // Clientes por página
+        currentPage: validPage,
+        usersPerPage: validLimit,
       },
     };
   }
@@ -65,21 +77,27 @@ export class ClientsService {
         throw new NotFoundException('Cliente no encontrado');
       }
 
-      // TODO: Validar contraseña actual con Supabase Auth
-      // const isValidPassword = await this.validatePasswordWithSupabase(
-      //   clientData.email,
-      //   updateClientDto.currentPassword
-      // );
+      // Validar contraseña actual con Supabase Auth
+      if (!updateClientDto.currentPassword) {
+        throw new BadRequestException(
+          'La contraseña actual es requerida para actualizar el perfil',
+        );
+      }
 
-      // SIMULACIÓN mientras tanto
-      if (updateClientDto.currentPassword !== 'currentPassword123') {
+      const isValidPassword = await this.validatePasswordWithSupabase(
+        clientData.email,
+        updateClientDto.currentPassword,
+      );
+
+      if (!isValidPassword) {
         throw new ForbiddenException('La contraseña actual es incorrecta');
       }
 
-      // TODO: Actualizar contraseña en Supabase Auth
-      // await this.updatePasswordInSupabase(updateClientDto.newPassword);
-
-      console.log('🔧 SIMULACIÓN: Contraseña actualizada en Supabase Auth');
+      // Actualizar contraseña en Supabase Auth
+      if (updateClientDto.newPassword) {
+        await this.updatePasswordInSupabase(updateClientDto.newPassword);
+        console.log('✅ Contraseña actualizada en Supabase Auth');
+      }
 
       // Limpiar campos de contraseña del DTO (NO se guardan en PostgreSQL)
       const { currentPassword, newPassword, ...updateData } = updateClientDto;
@@ -104,5 +122,54 @@ export class ClientsService {
     }
 
     return this.clientsRepository.deleteClientProfile(id);
+  }
+
+  /**
+   * Valida contraseña con Supabase Auth
+   */
+  private async validatePasswordWithSupabase(
+    email: string,
+    password: string,
+  ): Promise<boolean> {
+    try {
+      const { error } = await this.supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.log('❌ Error validando contraseña:', error.message);
+        return false;
+      }
+
+      console.log('✅ Contraseña validada correctamente');
+      return true;
+    } catch (error) {
+      console.error('❌ Error en validación de contraseña:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Actualiza contraseña en Supabase Auth
+   */
+  private async updatePasswordInSupabase(newPassword: string): Promise<void> {
+    try {
+      const { error } = await this.supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) {
+        console.error('❌ Error actualizando contraseña:', error.message);
+        throw new BadRequestException(
+          'Error actualizando contraseña en el sistema de autenticación',
+        );
+      }
+
+      console.log('✅ Contraseña actualizada en Supabase Auth');
+    } catch (error) {
+      console.error('❌ Error crítico actualizando contraseña:', error);
+      throw new BadRequestException('Error actualizando contraseña');
+    }
   }
 }
