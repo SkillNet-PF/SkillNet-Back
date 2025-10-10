@@ -19,6 +19,23 @@ export class AuthRepository {
     return await this.userRepository.findOne({ where: { email } });
   }
 
+  async findByExternalAuthId(externalAuthId: string): Promise<User | null> {
+    return await this.userRepository.findOne({ where: { externalAuthId } });
+  }
+
+  async upsertByExternalAuthId(
+    externalAuthId: string,
+    userData: Partial<User>,
+  ): Promise<User> {
+    const existing = await this.findByExternalAuthId(externalAuthId);
+    if (existing) {
+      const merged = this.userRepository.merge(existing, userData);
+      return await this.userRepository.save(merged);
+    }
+    const created = this.userRepository.create({ ...userData, externalAuthId });
+    return await this.userRepository.save(created);
+  }
+
   async findById(id: string): Promise<User | null> {
     return await this.userRepository.findOne({ where: { userId: id } });
   }
