@@ -46,6 +46,12 @@ export class AppointmentsService {
 
     if (!category || !appointmentDate || !hour || !notes || !provider) throw new BadRequestException('all required fields must be complete')
 
+    //verifico que la fecha de emision sea posterior a la actual
+    const today = new Date();
+
+    if (appointmentDate<= today) throw new BadRequestException('the appointment date must be later than the current date')
+
+
     const categoryFound = await this.categoryRepository.findOneBy({Name: category})
     const providerFound = await this.providerRepository.findOne({
       where: {name: provider}, 
@@ -57,29 +63,51 @@ export class AppointmentsService {
 
     if (providerFound.category !== categoryFound) throw new BadRequestException(`the provider does not have the category ${category}`)
    
-    const day = appointmentDate.getDay()
+    //convierto la fecha en un dia de la semana
+    const appointmentDay = appointmentDate.toLocaleDateString(
+      'es-ES', 
+      { weekday: 'long' });
+    
+    if (!providerFound.dias.includes(appointmentDay)) {
+    throw new BadRequestException(`El proveedor no trabaja los días ${appointmentDay}`);
+    }
 
-    const verifprovider:ServiceProvider = this.providerRepository
-    .createQueryBuilder('provider')
-    .leftJoinAndSelect('provider.appointments', 'appointment')
-    .where('provider.category = :category', { categoryFound })
-    .andWhere(':day = ANY (provider.workDays)', { day })
-    .andWhere(':hour = ANY (provider.workHours)', { hour })
-    .andWhere(qb => {
-      const subQuery = qb.subQuery()
-        .select('a.id')
-        .from('appointments', 'a')
-        .where('a."providerId" = provider.id')
-        .andWhere('a."AppointmentDate" = :appointmentDate', { appointmentDate })
-        .andWhere('a."AppointmentHour" = :hour', { hour })
-        .getQuery();
-      return `provider.id NOT IN (${subQuery})`;
-    })
-    //verificar que el proveedor no tenga ordenes emitidas en esa fecha y horario
+    if (!providerFound.horarios.includes(hour)) {
+      throw new BadRequestException(`El proveedor no trabaja en el horario ${hour}`)
+    }
+      //verificar que el proveedor no tenga ordenes emitidas en esa fecha y horario
+    const providerId = providerFound.userId
+    
+    const existingAppointment = await this.appointmentRepository
+    .createQueryBuilder('appointment')
+    .leftJoin('appointment.UserProvider', 'provider')
+    .where('provider.id = :providerId', { providerId })
+    .andWhere('appointment.AppointmentDate = :appointmentDate', { appointmentDate })
+    .andWhere('appointment.hour = :hour', { hour })
+    .getOne();
+    
+    if (existingAppointment) throw new BadRequestException(`The provider is unavailable on ${appointmentDate} at ${hour}`)
+    
     
     //CREACION DEL APPOINTMENT
-    //crear la fecha de emision, y crear el appointment (asignar el usuario el extraido del token)
-    //restar un servicio de los disponibles al usuario
+    const appointment = new Appointment();
+
+    appointment.Category = categoryFound;
+    appointment.CreationDate = today;
+    appointment.AppointmentDate = appointmentDate;
+    appointment.hour = hour;
+    appointment.Notes = notes;
+    appointment.UserClient = authUser;
+    appointment.UserProvider = providerFound;
+
+    await this.appointmentRepository.save(appointment);
+
+    //restamos un servicio del usuario
+
+    await this.clientRepository.update({userId: authUser.userId}, {ServicesLeft: authUser.ServicesLeft-1})
+    
+    return 'appointment succesfully saved'
+    
 
   }
 

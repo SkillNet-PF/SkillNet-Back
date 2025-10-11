@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToOne, TableInheritance } from 'typeorm';
 import { UserRole } from '../../common/enums/user-role.enum';
 import {v4 as uuid} from 'uuid'
+import { IsIn, isIn } from 'class-validator';
 
 
 @Entity('users')
@@ -33,8 +34,8 @@ export abstract class User {
   @Column({
     type: 'enum',
     enum: UserRole,
-    default: UserRole.client,
   })
+  @IsIn(['client', 'provider'])
   rol!: UserRole;
 
   @Column({ default: true })
