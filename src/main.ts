@@ -3,11 +3,11 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { SwaggerModule } from '@nestjs/swagger/dist/swagger-module';
 import { DocumentBuilder } from '@nestjs/swagger';
-
-//agregar configuración de swagger
+import { createAuth0Middleware } from './config/auth.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(createAuth0Middleware());
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -35,4 +35,5 @@ async function bootstrap() {
     throw new Error(`⚠️ Error starting server: ${error}`);
   }
 }
+
 bootstrap();

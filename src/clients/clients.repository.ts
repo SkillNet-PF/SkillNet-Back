@@ -1,28 +1,32 @@
-//falta implementar la lógica real de los métodos, importar el modelo Client y el repositorio de TypeORM, y manejar errores y excepciones, además de agregar validaciones y decoradores de swagger, y usar DTOs en los métodos que los requieran, además de inyectar el repositorio en el constructor, y agregar decoradores de nestjs.
-
-import { Injectable } from '@nestjs/common';
+import {
+  BadGatewayException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Client } from './entities/client.entity';
 import { Repository } from 'typeorm';
+import { ClientFilters } from './interfaces/client-filter';
+import { UpdateClientDto } from './dto/update-client.dto';
 
 @Injectable()
 export class ClientsRepository {
   constructor(
     @InjectRepository(Client) private clientsRepository: Repository<Client>,
-
   ) {}
 
-  //traer todos los perfiles de clientes (solo para admin) y paginar
-  async getAllClients(page: number, limit: number) {
+  async getAllClients(page: number, limit: number, filters?: ClientFilters) {
     const skip = (page - 1) * limit;
     const [clients, totalClients] = await this.clientsRepository.findAndCount({
       take: limit,
       skip: skip,
+      where: { ...filters },
     });
+
     return {
       clients: clients.map(
-        ({ externalAuthId, ...clientWithoutPassword }) =>
-          clientWithoutPassword,
+        ({ externalAuthId, paymentMethod, ...clientWithoutSensitiveData }) =>
+          clientWithoutSensitiveData,
       ),
       totalClients,
       totalPages: Math.ceil(totalClients / limit),
@@ -30,14 +34,59 @@ export class ClientsRepository {
   }
 
   async getClientProfile(id: string) {
-    return `traerá el perfil del cliente #${id}`;
+    const client = await this.clientsRepository.findOne({
+      where: { userId: id },
+      relations: {
+        // suscription: true, // Descomentar si se implementa la relación
+        // providers: true, // Descomentar si se implementa la relación
+        // appointments: true, // Descomentar si se implementa la relación
+      },
+    });
+
+    if (!client) throw new NotFoundException('Cliente no encontrado');
+
+    const { externalAuthId, paymentMethod, ...clientWithoutSensitiveData } =
+      client;
+
+    return clientWithoutSensitiveData;
   }
 
-  async updateClientProfile(id: string, updateClientDto: any) {
-    return `actualizará el perfil del cliente #${id}`;
+  async updateClientProfile(id: string, updateClientDto: UpdateClientDto) {
+    const client = await this.clientsRepository.findOne({
+      where: { userId: id },
+    });
+
+    if (!client) throw new NotFoundException('Cliente no encontrado');
+
+    const updatedClient = await this.clientsRepository.save({
+      ...client,
+      ...updateClientDto,
+    });
+
+    const { externalAuthId, paymentMethod, ...clientWithoutSensitiveInfo } =
+      updatedClient;
+
+    return clientWithoutSensitiveInfo;
   }
 
   async deleteClientProfile(id: string) {
-    return `borrará el perfil del cliente #${id}`;
+    // Verificar que el cliente existe
+    const client = await this.clientsRepository.findOne({
+      where: { userId: id },
+    });
+
+    if (!client) throw new NotFoundException('Cliente no encontrado');
+
+    // Soft delete: marcar como inactivo en lugar de eliminar completamente
+    const deletedClient = await this.clientsRepository.save({
+      ...client,
+      isActive: false,
+    });
+
+    return {
+      message: 'Cuenta eliminada exitosamente',
+      status: 'success',
+      clientId: deletedClient.userId,
+    };
   }
 }

@@ -49,6 +49,27 @@ export class AuthService {
     const { userId, email, rol } = user;
     return this.jwtService.signAsync({ sub: userId, email, rol });
   }
+
+  async upsertFromAuth0Profile(auth0User: any): Promise<{ user: User; accessToken: string }> {
+    const externalAuthId: string = auth0User?.sub ?? '';
+    const email: string = auth0User?.email ?? '';
+    const name: string = auth0User?.name ?? auth0User?.nickname ?? '';
+    const imgProfile: string | undefined = auth0User?.picture;
+
+    if (!externalAuthId || !email) {
+      throw new UnauthorizedException('Invalid OIDC profile');
+    }
+
+    const userData: Partial<User> = {
+      email,
+      name,
+      imgProfile,
+    };
+
+    const user = await this.authRepository.upsertByExternalAuthId(externalAuthId, userData);
+    const accessToken = await this.signJwt(user);
+    return { user, accessToken };
+  }
 }
 
 

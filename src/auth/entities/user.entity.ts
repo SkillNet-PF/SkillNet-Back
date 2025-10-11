@@ -1,14 +1,28 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, TableInheritance } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  TableInheritance,
+} from 'typeorm';
 import { UserRole } from '../../common/enums/user-role.enum';
 import {v4 as uuid} from 'uuid'
 import { IsIn, isIn } from 'class-validator';
 
+// ===== CONFIGURACIÓN ORIGINAL (COMENTADA PARA ROLLBACK) =====
+// @TableInheritance({ column: { type: 'enum', name: 'rol' } })
+// ===== FIN CONFIGURACIÓN ORIGINAL =====
 
+// ===== NUEVA CONFIGURACIÓN CON DISCRIMINADOR EXPLÍCITO =====
 @Entity('users')
-@TableInheritance({ column: { type: 'enum', name: 'rol' } })
+@TableInheritance({
+  column: { type: 'enum', name: 'rol', enum: UserRole },
+  pattern: 'STI', // Single Table Inheritance
+})
+// ===== FIN NUEVA CONFIGURACIÓN =====
 export abstract class User {
   @PrimaryGeneratedColumn('uuid')
-  userId: string = uuid()
+  userId: string = uuid();
 
   @Column({ nullable: true })
   imgProfile?: string;
