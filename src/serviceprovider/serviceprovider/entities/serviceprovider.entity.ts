@@ -5,7 +5,7 @@ import { Column, ManyToOne, JoinColumn, ChildEntity } from 'typeorm';
 
 
 
-@ChildEntity('providers')
+@ChildEntity('provider')
 export class ServiceProvider extends User {
 
   @Column('text', { nullable: true })

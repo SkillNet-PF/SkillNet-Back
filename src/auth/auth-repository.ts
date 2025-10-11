@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { Client } from 'src/clients/entities/client.entity';
+import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
+import { UserRole } from 'src/common/enums/user-role.enum';
 
 @Injectable()
 export class AuthRepository {
@@ -11,8 +14,15 @@ export class AuthRepository {
   ) {}
 
   async create(userData: Partial<User>): Promise<User> {
-    const user = this.userRepository.create(userData);
-    return await this.userRepository.save(user);
+    const role = userData.rol ?? UserRole.client;
+    if (role === UserRole.provider) {
+      const providerRepo = this.userRepository.manager.getRepository(ServiceProvider);
+      const provider = providerRepo.create(userData as Partial<ServiceProvider>);
+      return await providerRepo.save(provider);
+    }
+    const clientRepo = this.userRepository.manager.getRepository(Client);
+    const client = clientRepo.create(userData as Partial<Client>);
+    return await clientRepo.save(client);
   }
 
   async findByEmail(email: string): Promise<User | null> {

@@ -5,6 +5,8 @@ import { LoginDto } from './dto/login.dto';
 import { User } from './entities/user.entity';
 import { AuthRepository } from './auth-repository';
 import { SupabaseService } from './supabase/supabase.service';
+import type { Request } from 'express';
+import { UserRole } from '../common/enums/user-role.enum';
 
 @Injectable()
 export class AuthService {
@@ -50,7 +52,7 @@ export class AuthService {
     return this.jwtService.signAsync({ sub: userId, email, rol });
   }
 
-  async upsertFromAuth0Profile(auth0User: any): Promise<{ user: User; accessToken: string }> {
+  async upsertFromAuth0Profile(auth0User: any, forcedRole?: UserRole): Promise<{ user: User; accessToken: string }> {
     const externalAuthId: string = auth0User?.sub ?? '';
     const email: string = auth0User?.email ?? '';
     const name: string = auth0User?.name ?? auth0User?.nickname ?? '';
@@ -64,11 +66,25 @@ export class AuthService {
       email,
       name,
       imgProfile,
+      rol: forcedRole,
     };
 
     const user = await this.authRepository.upsertByExternalAuthId(externalAuthId, userData);
     const accessToken = await this.signJwt(user);
     return { user, accessToken };
+  }
+
+  async me(userId: string): Promise<User | null> {
+    return this.authRepository.findById(userId);
+  }
+
+  async uploadAvatar(userId: string, file: any): Promise<{ user: User; imgProfile: string }> {
+    if (!file || !file.buffer || !file.originalname) {
+      throw new UnauthorizedException('Invalid file');
+    }
+    const imgUrl = await this.supabase.uploadUserImage(userId, file.buffer, file.originalname);
+    const user = await this.authRepository.update(userId, { imgProfile: imgUrl }) as User;
+    return { user, imgProfile: imgUrl };
   }
 }
 
