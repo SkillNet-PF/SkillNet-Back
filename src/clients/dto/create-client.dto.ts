@@ -1,5 +1,3 @@
-//falta agregar validaciones, decoradores y swagger
-
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import {
   IsEmail,
@@ -10,6 +8,7 @@ import {
   IsUrl,
   MinLength,
 } from 'class-validator';
+import { RegisterDto } from 'src/auth/dto/register.dto';
 
 export class CreateClientDto {
   @ApiProperty({
