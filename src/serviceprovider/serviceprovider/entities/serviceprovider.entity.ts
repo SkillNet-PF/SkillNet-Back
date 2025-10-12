@@ -7,6 +7,8 @@ import { Column, ManyToOne, JoinColumn, ChildEntity } from 'typeorm';
 
 @ChildEntity('provider')
 export class ServiceProvider extends User {
+  @Column('text', { nullable: true })
+  serviceType: string;
 
   @Column('text', { nullable: true })
   bio: string;

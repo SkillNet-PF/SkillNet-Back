@@ -1,29 +1,19 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
+import { RegisterDto } from '../../../auth/dto/register.dto';
 
-export class ProviderRegisterDto {
+export class ProviderRegisterDto extends RegisterDto {
+  
   @IsString()
-  @IsNotEmpty()
-  name!: string;
-
-  @IsEmail()
-  email!: string;
+  serviceType: string;
 
   @IsString()
-  @IsNotEmpty()
-  password!: string;
+  about: string;
 
-  @IsOptional()
   @IsString()
-  birthDate?: string;
+  days: string;
 
-  // provider specific
-  @IsOptional()
   @IsString()
-  serviceType?: string;
-
-  @IsOptional()
-  @IsString()
-  about?: string;
+  horarios: string;
 }
 
 
