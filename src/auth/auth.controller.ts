@@ -7,6 +7,7 @@ import { LoginDto } from './dto/login.dto';
 import { Auth0Guard } from 'src/guards/auth0.guard';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -91,8 +92,10 @@ export class AuthController {
  
   @Get('me')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Obtener el perfil del usuario autenticado' })
   async me(@Req() req: Request) {
-    const userId = (AuthController.toOidc(req).user as any)?.sub;
+    const userId = (AuthController.toOidc(req).user as any)?.userId;
     const user = await this.authService.me(userId);
     return { user };
   }
@@ -101,8 +104,23 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file'))
   @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Imagen a subir (campo form-data "file")',
+        },
+      },
+      required: ['file'],
+    },
+  })
   async uploadAvatar(@Req() req: Request, @UploadedFile() file: any) {
-    const userId = (AuthController.toOidc(req).user as any)?.sub;
+    const userId = (AuthController.toOidc(req).user as any)?.userId;
     return this.authService.uploadAvatar(userId, file);
   }
 }
