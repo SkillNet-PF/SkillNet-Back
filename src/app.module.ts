@@ -9,6 +9,7 @@ import { ClientsModule } from './clients/clients.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { log } from 'console';
 import { ServiceproviderModule } from './serviceprovider/serviceprovider/serviceprovider.module';
+import { SubscriptionModule } from './subscription/subscription.module';
 
 @Module({
   imports: [
@@ -41,7 +42,6 @@ import { ServiceproviderModule } from './serviceprovider/serviceprovider/service
           synchronize: true,
           autoLoadEntities: true,
           logging: true,
-          entities: [__dirname + '/../**/*.entity{.ts,.js}'],
         
         } as any;
       },
@@ -50,6 +50,7 @@ import { ServiceproviderModule } from './serviceprovider/serviceprovider/service
     AppointmentsModule,
     ClientsModule,
     ServiceproviderModule,
+    SubscriptionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
