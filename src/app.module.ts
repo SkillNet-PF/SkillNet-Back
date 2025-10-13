@@ -10,7 +10,6 @@ import { AppointmentsModule } from './appointments/appointments.module';
 
 @Module({
   imports: [
-    ClientsModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -35,8 +34,9 @@ import { AppointmentsModule } from './appointments/appointments.module';
           username,
           password,
           database,
-          dropSchema: false,
+          dropSchema: false, // ✅ ACTIVAR DROP SCHEMA SOLO EN DESARROLLO
           synchronize: true,
+          logging: false, // ✅ ACTIVAR LOGGING SQL
           autoLoadEntities: true,
         } as any;
       },
