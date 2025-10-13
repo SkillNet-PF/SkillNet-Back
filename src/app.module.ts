@@ -7,6 +7,9 @@ import { AuthModule } from './auth/auth.module';
 import typeormConfig from './config/typeorm';
 import { ClientsModule } from './clients/clients.module';
 import { AppointmentsModule } from './appointments/appointments.module';
+import { log } from 'console';
+import { ServiceproviderModule } from './serviceprovider/serviceprovider/serviceprovider.module';
+import { SubscriptionModule } from './subscription/subscription.module';
 
 @Module({
   imports: [
@@ -38,12 +41,16 @@ import { AppointmentsModule } from './appointments/appointments.module';
           dropSchema: false,
           synchronize: true,
           autoLoadEntities: true,
+          logging: true,
+        
         } as any;
       },
     }),
     AuthModule,
     AppointmentsModule,
     ClientsModule,
+    ServiceproviderModule,
+    SubscriptionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

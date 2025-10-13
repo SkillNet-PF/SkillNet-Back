@@ -12,6 +12,9 @@ import { User } from 'src/auth/entities/user.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { Client } from 'src/clients/entities/client.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
+import { Categories } from './entities/categories.entity';
+
+
 
 @Injectable()
 export class AppointmentsService {
@@ -27,7 +30,11 @@ export class AppointmentsService {
 
     @InjectRepository(ServiceProvider)
     private readonly providerRepository: Repository<ServiceProvider>,
-  ) {}
+
+    @InjectRepository(Categories)
+    private readonly categoryRepository: Repository<Categories>
+    
+  ){}
 
   async createAppointment(createAppointmentDto: CreateAppointmentDto, user) {
     const authUser = await this.clientRepository.findOneBy({
@@ -41,26 +48,81 @@ export class AppointmentsService {
         'Must be a client to create an appointment',
       );
 
-    if (authUser.servicesLeft === 0)
-      throw new BadRequestException(
-        'there are no services left to make this appointment',
-      );
+    if (authUser.servicesLeft === 0) throw new BadRequestException('there are no services left to make this appointment')
+    
+    const {category, appointmentDate, hour, notes, provider} = createAppointmentDto
 
-    //verificar que la nota exista
-    //verificar que la categoria solicitada exista
-    //verificar que la categoria solicitada este contenida dentro de las habilitadas
-    //verificar que el proveedor exista
-    //verificar que el proveedor tenga la categoria solicitada
-    //verificar que el proveedor no tenga ordenes emitidas en esa fecha y horario
+    if (!category || !appointmentDate || !hour || !notes || !provider) throw new BadRequestException('all required fields must be complete')
 
+    //verifico que la fecha de emision sea posterior a la actual
+    const today = new Date();
+
+    if (appointmentDate<= today) throw new BadRequestException('the appointment date must be later than the current date')
+
+
+    const categoryFound = await this.categoryRepository.findOneBy({Name: category})
+    const providerFound = await this.providerRepository.findOne({
+      where: {name: provider}, 
+      relations:{category: true, schedule:true}
+    })
+
+    if (!categoryFound) throw new NotFoundException('Category not found')
+    if (!providerFound) throw new NotFoundException('Provider not found')
+
+    if (providerFound.category !== categoryFound) throw new BadRequestException(`the provider does not have the category ${category}`)
+   
+    //convierto la fecha en un dia de la semana
+    const appointmentDay = appointmentDate.toLocaleDateString(
+      'es-ES', 
+      { weekday: 'long' });
+    
+    if (!providerFound.dias.includes(appointmentDay)) {
+    throw new BadRequestException(`El proveedor no trabaja los días ${appointmentDay}`);
+    }
+
+    if (!providerFound.horarios.includes(hour)) {
+      throw new BadRequestException(`El proveedor no trabaja en el horario ${hour}`)
+    }
+      //verificar que el proveedor no tenga ordenes emitidas en esa fecha y horario
+    const providerId = providerFound.userId
+    
+    const existingAppointment = await this.appointmentRepository
+    .createQueryBuilder('appointment')
+    .leftJoin('appointment.UserProvider', 'provider')
+    .where('provider.id = :providerId', { providerId })
+    .andWhere('appointment.AppointmentDate = :appointmentDate', { appointmentDate })
+    .andWhere('appointment.hour = :hour', { hour })
+    .getOne();
+    
+    if (existingAppointment) throw new BadRequestException(`The provider is unavailable on ${appointmentDate} at ${hour}`)
+    
+    
     //CREACION DEL APPOINTMENT
-    //crear la fecha de emision, y crear el appointment (asignar el usuario el extraido del token)
-    //restar un servicio de los disponibles al usuario
+    const appointment = new Appointment();
+
+    appointment.Category = categoryFound;
+    appointment.CreationDate = today;
+    appointment.AppointmentDate = appointmentDate;
+    appointment.hour = hour;
+    appointment.Notes = notes;
+    appointment.UserClient = authUser;
+    appointment.UserProvider = providerFound;
+
+    await this.appointmentRepository.save(appointment);
+
+    //restamos un servicio del usuario
+
+    await this.clientRepository.update({userId: authUser.userId}, {servicesLeft: authUser.servicesLeft-1})
+    
+    return 'appointment succesfully saved'
+    
+
   }
 
   async findUserAppointments(
     page: number,
     limit: number,
+    filters,
     user,
   ): Promise<Appointment[]> {
     //definir si el usuario es proveedor o cliente
@@ -72,19 +134,33 @@ export class AppointmentsService {
 
     if (authUser.rol != user.rol) throw new BadRequestException('bad request');
 
-    //define si busca los appointments de un cliente o de un provider
-    let whereClause = {};
-    if (authUser.rol === UserRole.client) {
-      whereClause = { UserClientId: user.userId };
+    
+    const query = this.appointmentRepository
+      .createQueryBuilder('appointment')
+      .leftJoinAndSelect('appointment.provider', 'provider')
+      .leftJoinAndSelect('appointment.category', 'category')
+      
+      
+     if (authUser.rol === UserRole.client) {
+      query.where('appointment.UserClientId = :userId', { userId: user.userId });
+    } else if (authUser.rol === UserRole.provider) {
+      query.where('appointment.UserProviderId = :userId', { userId: user.userId });
     }
-    if (authUser.rol === UserRole.provider) {
-      whereClause = { UserProviderId: user.userId };
-    }
+     if (filters.status) {
+        query.andWhere('appointment.status = :status', { status: filters.status });
+      }
 
-    const appointments: Appointment[] = await this.appointmentRepository.find({
-      where: whereClause,
-      order: { AppointmentDate: 'DESC' },
-    });
+      if (filters.category) {
+        query.andWhere('category.name = :category', { category: filters.category });
+     }
+
+      if (filters.providerId) {
+       query.andWhere('provider.id = :providerId', { providerId: filters.providerId });
+     }
+    
+      query.orderBy('appointment.AppointmentDate', 'DESC');
+
+  const appointments: Appointment[]= await query.getMany()
 
     //paginar
     const start = (page - 1) * limit;
@@ -94,8 +170,8 @@ export class AppointmentsService {
     return appointmentsPage;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} appointment`;
+  async findOne(id:string, user) {
+    
   }
 
   update(id: number, updateAppointmentDto: UpdateAppointmentDto) {
