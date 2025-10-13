@@ -122,6 +122,7 @@ export class AppointmentsService {
   async findUserAppointments(
     page: number,
     limit: number,
+    filters,
     user,
   ): Promise<Appointment[]> {
     //definir si el usuario es proveedor o cliente
@@ -133,19 +134,33 @@ export class AppointmentsService {
 
     if (authUser.rol != user.rol) throw new BadRequestException('bad request');
 
-    //define si busca los appointments de un cliente o de un provider
-    let whereClause = {};
-    if (authUser.rol === UserRole.client) {
-      whereClause = { UserClientId: user.userId };
+    
+    const query = this.appointmentRepository
+      .createQueryBuilder('appointment')
+      .leftJoinAndSelect('appointment.provider', 'provider')
+      .leftJoinAndSelect('appointment.category', 'category')
+      
+      
+     if (authUser.rol === UserRole.client) {
+      query.where('appointment.UserClientId = :userId', { userId: user.userId });
+    } else if (authUser.rol === UserRole.provider) {
+      query.where('appointment.UserProviderId = :userId', { userId: user.userId });
     }
-    if (authUser.rol === UserRole.provider) {
-      whereClause = { UserProviderId: user.userId };
-    }
+     if (filters.status) {
+        query.andWhere('appointment.status = :status', { status: filters.status });
+      }
 
-    const appointments: Appointment[] = await this.appointmentRepository.find({
-      where: whereClause,
-      order: { AppointmentDate: 'DESC' },
-    });
+      if (filters.category) {
+        query.andWhere('category.name = :category', { category: filters.category });
+     }
+
+      if (filters.providerId) {
+       query.andWhere('provider.id = :providerId', { providerId: filters.providerId });
+     }
+    
+      query.orderBy('appointment.AppointmentDate', 'DESC');
+
+  const appointments: Appointment[]= await query.getMany()
 
     //paginar
     const start = (page - 1) * limit;
@@ -155,8 +170,8 @@ export class AppointmentsService {
     return appointmentsPage;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} appointment`;
+  async findOne(id:string, user) {
+    
   }
 
   update(id: number, updateAppointmentDto: UpdateAppointmentDto) {

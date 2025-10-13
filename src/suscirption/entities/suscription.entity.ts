@@ -14,7 +14,7 @@ export class suscriptions{
     Descption:string;
 
     @Column()
-    Services:number;
+    monthlyServices:number;
 
     @Column()
     price:number

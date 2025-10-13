@@ -9,9 +9,11 @@ export default registerAs('typeorm', () => ({
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  dropSchema: false, // solo dev
-  synchronize: true,
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   migrations: ['dist/migrations/*{.ts,.js}'],
+  logging: true,
+  dropSchema: false, // solo dev
+  synchronize: true,
+  autoLoadEntities: true,
 }));
 //export const connectionSource = new DataSource(config as DataSourceOptions);

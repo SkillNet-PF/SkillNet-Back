@@ -7,6 +7,8 @@ import { AuthModule } from './auth/auth.module';
 import typeormConfig from './config/typeorm';
 import { ClientsModule } from './clients/clients.module';
 import { AppointmentsModule } from './appointments/appointments.module';
+import { log } from 'console';
+import { ServiceproviderModule } from './serviceprovider/serviceprovider/serviceprovider.module';
 
 @Module({
   imports: [
@@ -38,12 +40,16 @@ import { AppointmentsModule } from './appointments/appointments.module';
           dropSchema: false,
           synchronize: true,
           autoLoadEntities: true,
+          logging: true,
+          entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+        
         } as any;
       },
     }),
     AuthModule,
     AppointmentsModule,
     ClientsModule,
+    ServiceproviderModule,
   ],
   controllers: [AppController],
   providers: [AppService],
