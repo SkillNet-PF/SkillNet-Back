@@ -13,7 +13,7 @@ import { AppointmentsModule } from './appointments/appointments.module';
     ClientsModule,
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env.development',
+      envFilePath: '.env',
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],

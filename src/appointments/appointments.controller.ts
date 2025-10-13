@@ -9,8 +9,8 @@ import { Roles } from 'src/auth/roles.decorator';
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
-  @Roles()
-  @UseGuards(JwtAuthGuard)
+  // @Roles()
+  // @UseGuards(JwtAuthGuard)
   @Post()
   createAppointment(@Body() createAppointmentDto: CreateAppointmentDto, @Req() request) {
     const user = request.user
