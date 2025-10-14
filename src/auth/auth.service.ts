@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
+import { RegisterClientDto } from './dto/register-client.dto';
 import { LoginDto } from './dto/login.dto';
 import { User } from './entities/user.entity';
 import { AuthRepository } from './auth-repository';
@@ -9,31 +10,52 @@ import { SupabaseService } from './supabase/supabase.service';
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly jwtService: JwtService, 
+    private readonly jwtService: JwtService,
     private readonly authRepository: AuthRepository,
     private readonly supabase: SupabaseService,
   ) {}
 
-  async register(payload: RegisterDto): Promise<{ user: User; accessToken: string }> {
+  async registerClient(
+    payload: RegisterClientDto,
+  ): Promise<{ user: User; accessToken: string }> {
     const { email, password, name } = payload;
-    const { data, error } = await this.supabase.signUpWithEmail(email, password);
+
+    // Crear usuario en Supabase Auth
+    const { data, error } = await this.supabase.signUpWithEmail(
+      email,
+      password,
+    );
     if (error) {
-      throw new UnauthorizedException(error.message);
+      throw new UnauthorizedException(
+        `Error creando cliente en Supabase: ${error.message}`,
+      );
     }
+
     const externalAuthId = data.user?.id ?? '';
 
-    const userData: Partial<User> = {
+    // Preparar datos específicos para cliente
+    const clientData: Partial<User> = {
       ...payload,
       externalAuthId,
+      rol: payload.rol,
     };
-    const createdUser = await this.authRepository.create(userData);
-    const accessToken = await this.signJwt(createdUser);
-    return { user: createdUser, accessToken };
+
+    const createdClient = await this.authRepository.createClient(clientData);
+
+    const accessToken = await this.signJwt(createdClient);
+
+    return {
+      user: createdClient,
+      accessToken,
+    };
   }
 
   async login(payload: LoginDto): Promise<{ user: User; accessToken: string }> {
     const { email, password } = payload;
-    const { data, error } = await this.supabase.signInWithEmail(email, password);
+    const { data, error } = await this.supabase.signInWithEmail(
+      email,
+      password,
+    );
     if (error) {
       throw new UnauthorizedException(error.message);
     }
@@ -50,7 +72,9 @@ export class AuthService {
     return this.jwtService.signAsync({ sub: userId, email, rol });
   }
 
-  async upsertFromAuth0Profile(auth0User: any): Promise<{ user: User; accessToken: string }> {
+  async upsertFromAuth0Profile(
+    auth0User: any,
+  ): Promise<{ user: User; accessToken: string }> {
     const externalAuthId: string = auth0User?.sub ?? '';
     const email: string = auth0User?.email ?? '';
     const name: string = auth0User?.name ?? auth0User?.nickname ?? '';
@@ -66,10 +90,11 @@ export class AuthService {
       imgProfile,
     };
 
-    const user = await this.authRepository.upsertByExternalAuthId(externalAuthId, userData);
+    const user = await this.authRepository.upsertByExternalAuthId(
+      externalAuthId,
+      userData,
+    );
     const accessToken = await this.signJwt(user);
     return { user, accessToken };
   }
 }
-
-
