@@ -30,6 +30,7 @@ export class AuthRepository {
       case UserRole.client:
         const clientData = {
           ...userData,
+          // isActive se establece automáticamente por @Column({ default: true })
           //los servicios iniciales dependerán del plan que se elija en el frontend (basic =5, standard=10, premium=15)
           // servicesLeft: userData.plan === 'basic' ? 5 : userData.plan === 'standard' ? 10: 15,
           servicesLeft: 5,
@@ -44,6 +45,7 @@ export class AuthRepository {
       case UserRole.provider:
         const providerData = {
           ...userData,
+          // isActive se establece automáticamente por @Column({ default: true })
           bio: '',
           dias: [], // Corregido: era "días"
           horarios: [], // Corregido: era "horario"
