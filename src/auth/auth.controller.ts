@@ -50,7 +50,7 @@ export class AuthController {
     return this.authService.upsertFromAuth0Profile(auth0User);
   }
 
-  @Post('auth0/register/provider') 
+  @Post('auth0/register/provider')
   @UseGuards(Auth0Guard)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Registrar proveedor via Auth0' })

@@ -34,6 +34,10 @@ export class AuthService {
 
     const externalAuthId = data.user?.id ?? '';
 
+    if (!externalAuthId) {
+      throw new UnauthorizedException('Error obteniendo ID de autenticación');
+    }
+
     // Preparar datos específicos para cliente
     const clientData: Partial<User> = {
       ...payload,
@@ -43,7 +47,17 @@ export class AuthService {
 
     const createdClient = await this.authRepository.createClient(clientData);
 
+    if (!createdClient) {
+      throw new UnauthorizedException(
+        'Error creando cliente en la base de datos',
+      );
+    }
+
     const accessToken = await this.signJwt(createdClient);
+
+    if (!accessToken) {
+      throw new UnauthorizedException('Error generando token de acceso');
+    }
 
     return {
       user: createdClient,
@@ -51,25 +65,33 @@ export class AuthService {
     };
   }
 
-  async registerProvider(payload: ProviderRegisterDto): Promise<{ user: User; accessToken: string }> {
+  async registerProvider(
+    payload: ProviderRegisterDto,
+  ): Promise<{ user: User; accessToken: string }> {
     const { email, password } = payload;
-    
-    const { data, error } = await this.supabase.signUpWithEmail(email, password);
+
+    const { data, error } = await this.supabase.signUpWithEmail(
+      email,
+      password,
+    );
     if (error) {
-      throw new UnauthorizedException(`Error creando proveedor en Supabase: ${error.message}`);
+      throw new UnauthorizedException(
+        `Error creando proveedor en Supabase: ${error.message}`,
+      );
     }
 
     const externalAuthId = data.user?.id ?? '';
-    
+
     const providerData: Partial<User> = {
       ...payload,
       externalAuthId,
       rol: UserRole.provider,
     };
 
-    const createdProvider = await this.authRepository.createProvider(providerData);
+    const createdProvider =
+      await this.authRepository.createProvider(providerData);
     const accessToken = await this.signJwt(createdProvider);
-    
+
     return { user: createdProvider, accessToken };
   }
 
@@ -95,7 +117,9 @@ export class AuthService {
     return this.jwtService.signAsync({ sub: userId, email, rol });
   }
 
-  async upsertFromAuth0Profile(auth0User: any): Promise<{ user: User; accessToken: string }> {
+  async upsertFromAuth0Profile(
+    auth0User: any,
+  ): Promise<{ user: User; accessToken: string }> {
     const externalAuthId: string = auth0User?.sub ?? '';
     const email: string = auth0User?.email ?? '';
     const name: string = auth0User?.name ?? auth0User?.nickname ?? '';
@@ -124,12 +148,21 @@ export class AuthService {
     return this.authRepository.findById(userId);
   }
 
-  async uploadAvatar(userId: string, file: any): Promise<{ user: User; imgProfile: string }> {
+  async uploadAvatar(
+    userId: string,
+    file: any,
+  ): Promise<{ user: User; imgProfile: string }> {
     if (!file || !file.buffer || !file.originalname) {
       throw new UnauthorizedException('Invalid file');
     }
-    const imgUrl = await this.supabase.uploadUserImage(userId, file.buffer, file.originalname);
-    const user = await this.authRepository.update(userId, { imgProfile: imgUrl }) as User;
+    const imgUrl = await this.supabase.uploadUserImage(
+      userId,
+      file.buffer,
+      file.originalname,
+    );
+    const user = (await this.authRepository.update(userId, {
+      imgProfile: imgUrl,
+    })) as User;
     return { user, imgProfile: imgUrl };
   }
 }
