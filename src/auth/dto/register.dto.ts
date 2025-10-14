@@ -8,6 +8,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  MinLength,
 } from 'class-validator';
 import { UserRole } from '../../common/enums/user-role.enum';
 
@@ -51,8 +52,4 @@ export abstract class RegisterDto {
   @IsEnum(UserRole)
   @IsIn(['client', 'provider'])
   rol!: UserRole;
-
-  @IsEmpty()
-  @IsBoolean()
-  isActive: boolean;
 }

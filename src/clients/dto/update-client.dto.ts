@@ -11,11 +11,12 @@ import {
 import { RegisterClientDto } from '../../auth/dto/register-client.dto';
 
 export class UpdateClientDto extends PartialType(
-  OmitType(RegisterDto, [
+  OmitType(RegisterClientDto, [
     'userId',
     'email',
     'rol',
-    'isActive',
+    'password',
+    'confirmPassword',
   ] as const),
 ) {
   @ApiProperty({
