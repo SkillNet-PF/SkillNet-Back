@@ -1,7 +1,7 @@
 import { Column, Entity, PrimaryColumn, ManyToOne, JoinColumn } from "typeorm";
 import { Client } from "src/clients/entities/client.entity";
 import { Status } from "./status.enum";
-import { Categories } from "./categories.entity";
+import { Categories } from "../../categories/entities/categories.entity";
 import { ServiceProvider } from "src/serviceprovider/serviceprovider/entities/serviceprovider.entity";
 import {v4 as uuid} from 'uuid'
 

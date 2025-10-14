@@ -6,7 +6,7 @@ import { Appointment } from './entities/appointment.entity';
 import { User } from 'src/auth/entities/user.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 import { Client } from 'pg';
-import { Categories } from './entities/categories.entity';
+import { Categories } from '../categories/entities/categories.entity';
 
 @Module({
   imports: [

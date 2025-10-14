@@ -12,7 +12,7 @@ import { User } from 'src/auth/entities/user.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { Client } from 'src/clients/entities/client.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
-import { Categories } from './entities/categories.entity';
+import { Categories } from '../categories/entities/categories.entity';
 
 
 
