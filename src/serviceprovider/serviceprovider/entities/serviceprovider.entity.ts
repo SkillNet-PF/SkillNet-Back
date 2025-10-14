@@ -1,5 +1,5 @@
 import { Appointment } from 'src/appointments/entities/appointment.entity';
-import { Categories } from 'src/appointments/entities/categories.entity';
+import { Categories } from 'src/categories/entities/categories.entity';
 import { User } from 'src/auth/entities/user.entity';
 import { Column, ManyToOne, JoinColumn, ChildEntity } from 'typeorm';
 
