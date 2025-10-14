@@ -1,4 +1,11 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, BadRequestException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  BadRequestException,
+} from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
 import { RegisterDto } from 'src/auth/dto/register.dto';
 import { UserRole } from 'src/common/enums/user-role.enum';
@@ -10,7 +17,9 @@ export class PublicClientsController {
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  async registerClient(@Body() dto: ClientRegisterDto & { confirmPassword?: string }) {
+  async registerClient(
+    @Body() dto: ClientRegisterDto & { confirmPassword?: string },
+  ) {
     if (dto.confirmPassword && dto.password !== dto.confirmPassword) {
       throw new BadRequestException('Passwords do not match');
     }
@@ -19,10 +28,12 @@ export class PublicClientsController {
       name: dto.name,
       email: dto.email,
       password: dto.password,
+      confirmPassword: dto.confirmPassword || dto.password,
+      address: 'No especificada',
+      phone: 'No especificado',
       birthDate: dto.birthDate,
       rol: UserRole.client,
-      isActive: true,
     } as RegisterDto;
-    return this.authService.register(payload);
+    return this.authService.registerClient(payload as any);
   }
 }

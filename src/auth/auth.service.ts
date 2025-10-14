@@ -43,6 +43,7 @@ export class AuthService {
       ...payload,
       externalAuthId,
       rol: payload.rol,
+      isActive: true, // Establecer como activo por defecto
     };
 
     const createdClient = await this.authRepository.createClient(clientData);
@@ -68,8 +69,9 @@ export class AuthService {
   async registerProvider(
     payload: ProviderRegisterDto,
   ): Promise<{ user: User; accessToken: string }> {
-    const { email, password } = payload;
+    const { email, password, serviceType, about, days, horarios } = payload;
 
+    // Crear usuario en Supabase Auth
     const { data, error } = await this.supabase.signUpWithEmail(
       email,
       password,
@@ -82,15 +84,37 @@ export class AuthService {
 
     const externalAuthId = data.user?.id ?? '';
 
-    const providerData: Partial<User> = {
+    if (!externalAuthId) {
+      throw new UnauthorizedException('Error obteniendo ID de autenticación');
+    }
+
+    // Preparar datos específicos para proveedor con mapeo de campos
+    const providerData = {
       ...payload,
       externalAuthId,
       rol: UserRole.provider,
+      isActive: true, // Establecer como activo por defecto
+      // Mapear campos específicos del proveedor
+      bio: about, // about -> bio en la entidad
+      dias: days?.split(',').map((s) => s.trim()), // string CSV -> array
+      horarios: horarios?.split(',').map((s) => s.trim()), // string CSV -> array
+      serviceType: serviceType,
     };
 
     const createdProvider =
       await this.authRepository.createProvider(providerData);
+
+    if (!createdProvider) {
+      throw new UnauthorizedException(
+        'Error creando proveedor en la base de datos',
+      );
+    }
+
     const accessToken = await this.signJwt(createdProvider);
+
+    if (!accessToken) {
+      throw new UnauthorizedException('Error generando token de acceso');
+    }
 
     return { user: createdProvider, accessToken };
   }
