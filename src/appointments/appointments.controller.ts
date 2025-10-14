@@ -16,20 +16,20 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
-@UseGuards(JwtAuthGuard)
+
 @Controller('appointments')
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
   // @Roles()
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Post()
-  createAppointment(@Body() createAppointmentDto: CreateAppointmentDto) {
-    // Respuesta temporal para evitar 404 mientras se implementa lógica
-    return { ok: true, message: 'Appointment creation is under construction' };
+  createAppointment(@Body() createAppointmentDto: CreateAppointmentDto, @Req() request) {
+    const user = request.user;
+    console.log(user);
+    return this.appointmentsService.createAppointment(createAppointmentDto, user);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get()
   findUserAppointmens(
     @Req() request,
@@ -52,14 +52,12 @@ export class AppointmentsController {
     return this.appointmentsService.findUserAppointments(1, 5, filters, user);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string, @Req() request) {
     const user = request.user;
     return this.appointmentsService.findOne(id, user);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Put(':id')
   update(
     @Param('id') id: string,
@@ -68,7 +66,6 @@ export class AppointmentsController {
     return this.appointmentsService.update(+id, updateAppointmentDto);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.appointmentsService.remove(+id);
