@@ -1,8 +1,11 @@
 import { Appointment } from 'src/appointments/entities/appointment.entity';
-import { Categories } from 'src/appointments/entities/categories.entity';
+import { Categories } from 'src/categories/entities/categories.entity';
 import { User } from 'src/auth/entities/user.entity';
 import { Column, ManyToOne, JoinColumn, ChildEntity } from 'typeorm';
 
+// ===== CÓDIGO ORIGINAL (COMENTADO PARA ROLLBACK) =====
+// @ChildEntity('providers')
+// ===== FIN CÓDIGO ORIGINAL =====
 
 
 @ChildEntity('provider')
@@ -19,11 +22,13 @@ export class ServiceProvider extends User {
   @Column('simple-array', { nullable: true })
   horarios: string[]; // ejemplo: ['09:00', '14:00']
 
-  @ManyToOne(() => Categories, category => category.ServiceProviders)
+  @ManyToOne(() => Categories, (category) => category.ServiceProviders)
   @JoinColumn({ name: 'categoryId' })
   category: Categories;
-  
-  @ManyToOne(() => Appointment, schedule => schedule.UserProvider, { nullable: true })
+
+  @ManyToOne(() => Appointment, (schedule) => schedule.UserProvider, {
+    nullable: true,
+  })
   @JoinColumn({ name: 'scheduleId' })
   schedule: Appointment[];
 }

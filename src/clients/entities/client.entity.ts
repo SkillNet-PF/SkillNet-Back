@@ -1,22 +1,16 @@
-//falta definir las relaciones con provider y subscription, importar las entidades y decoradores de typeorm,y agregar validaciones y decoradores de swagger.
-
 import { User } from 'src/auth/entities/user.entity';
-import { suscriptions } from 'src/suscirption/entities/suscription.entity';
-import {
-  
-  Column,
- 
-  ChildEntity,
-  ManyToOne,
-  JoinColumn,
+// import { suscriptions } from 'src/suscirption/entities/suscription.entity';
+import { UserRole } from 'src/common/enums/user-role.enum';
+import { Column, ChildEntity, ManyToOne, JoinColumn } from 'typeorm';
 
-} from 'typeorm';
-
+// ===== CÓDIGO ORIGINAL (COMENTADO PARA ROLLBACK) =====
+// @ChildEntity({ name: 'CLIENTS' })
+// ===== FIN CÓDIGO ORIGINAL =====
 
 @ChildEntity('client')
 export class Client extends User {
+  // Hereda de User: userId, imgProfile, name, birthDate, email, externalAuthId, address, phone, rol, isActive
 
-  
   //Datos de tarjeta se guardarán en un servicio externo como Stripe o similar
   @Column({
     type: 'varchar',
@@ -25,22 +19,26 @@ export class Client extends User {
   })
   paymentMethod?: string;
 
-  @ManyToOne(() => suscriptions)
-  @JoinColumn({ name: 'suscriptionId' })
-  suscription?: suscriptions;
+  // Relación con suscripciones (temporalmente comentada para pruebas)
+  // @ManyToOne(() => suscriptions)
+  // @JoinColumn({ name: 'suscriptionId' })
+  // suscription?: suscriptions;
 
   @Column()
-  ServicesLeft: number;
+  servicesLeft: number;
 
   @Column()
-  StartDate: Date;
+  startDate: Date;
 
   @Column()
-  EndDate: Date;
+  endDate: Date;
 
   @Column()
-  PaymentStatus: boolean
+  paymentStatus: boolean;
 
+  // Relación con citas (temporalmente comentada para pruebas)
+
+  // @ManyToOne(() => Appointment, (appointment) => appointment.clients)
+  // @JoinColumn({ name: 'appointment_id' })
+  // appointment?: Appointment;
 }
-
-

@@ -9,6 +9,7 @@ import {
   HttpStatus,
   ParseUUIDPipe,
   HttpCode,
+  Req,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -27,8 +28,13 @@ import { UserRole } from '../common/enums/user-role.enum';
 import { ClientsService } from './clients.service';
 // import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { ClientFilters } from './interfaces/client-filter';
+import { AuthenticatedClient } from './interfaces/authenticated-client';
 
-// @ApiTags('Clients')
+interface AuthenticatedRequest extends Request {
+  user: AuthenticatedClient;
+}
+
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('clients')
@@ -54,6 +60,24 @@ export class ClientsController {
     example: 10,
     description: 'Elementos por página',
   })
+  @ApiQuery({
+    name: 'name',
+    required: false,
+    example: 'Juan Perez',
+    description: 'Filtrar por nombre del cliente',
+  })
+  @ApiQuery({
+    name: 'email',
+    required: false,
+    example: 'juan@email.com',
+    description: 'Filtrar por email del cliente',
+  })
+  @ApiQuery({
+    name: 'rol',
+    required: false,
+    example: 'client',
+    description: 'Filtrar por rol (client, provider, admin)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Lista de clientes obtenida exitosamente',
@@ -67,13 +91,26 @@ export class ClientsController {
     description: 'Prohibido - Solo administradores',
   })
   getAllClients(
-    @Query('page') page: string = '5',
+    @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
+    @Query('name') name?: string,
+    @Query('email') email?: string,
+    @Query('rol') rol?: string,
   ) {
+    const filters: ClientFilters = {
+      name,
+      email,
+      rol: rol as UserRole,
+    };
+
     if (page && limit) {
-      return this.clientsService.getAllClients(Number(page), Number(limit));
+      return this.clientsService.getAllClients(
+        Number(page),
+        Number(limit),
+        filters,
+      );
     }
-    return this.clientsService.getAllClients(5, 10);
+    return this.clientsService.getAllClients(5, 10, filters);
   }
 
   @Get('profile/:id')
@@ -100,8 +137,11 @@ export class ClientsController {
     status: 401,
     description: 'No autorizado - Token requerido',
   })
-  getClientProfile(@Param('id', ParseUUIDPipe) id: string) {
-    return this.clientsService.getClientProfile(id);
+  getClientProfile(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.clientsService.getClientProfile(id, req.user);
   }
 
   @Put('profile/:id')
@@ -173,7 +213,10 @@ export class ClientsController {
     status: 404,
     description: 'Cliente no encontrado',
   })
-  deleteClientProfile(@Param('id', ParseUUIDPipe) id: string) {
-    return this.clientsService.deleteClientProfile(id);
+  deleteClientProfile(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.clientsService.deleteClientProfile(id, req.user);
   }
 }

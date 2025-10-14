@@ -10,6 +10,9 @@ export class CreateAppointmentDto {
     @IsDate()
     appointmentDate:Date;
 
+    @IsNotEmpty()
+    hour: string;
+
     
     @IsNotEmpty()
     @IsString()
