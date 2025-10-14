@@ -16,8 +16,6 @@ export class UpdateClientDto extends PartialType(
     'email',
     'rol',
     'isActive',
-    'paymentMethod',
-    'providerId',
   ] as const),
 ) {
   @ApiProperty({

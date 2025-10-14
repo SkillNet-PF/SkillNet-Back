@@ -41,9 +41,9 @@ export class RegisterDto {
   @IsIn(['client', 'provider'])
   rol!: UserRole;
 
-  @IsEmpty() //Esto hace que isActive se establezca automáticamente como true en el backend
+  @IsOptional()
   @IsBoolean()
-  isActive: boolean;
+  isActive?: boolean;
 }
 
 
