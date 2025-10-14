@@ -16,7 +16,6 @@ import { InitialDataSeed } from './seeds/seeds.service';
 
 @Module({
   imports: [
-    ClientsModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -41,11 +40,10 @@ import { InitialDataSeed } from './seeds/seeds.service';
           username,
           password,
           database,
-          dropSchema: false,
+          dropSchema: false, // ✅ ACTIVAR DROP SCHEMA SOLO EN DESARROLLO (mantenemos tu config)
           synchronize: true,
+          logging: false, // ✅ ACTIVAR LOGGING SQL (mantenemos tu config)
           autoLoadEntities: true,
-          logging: false,
-        
         } as any;
       },
     }),

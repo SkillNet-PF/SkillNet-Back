@@ -1,7 +1,19 @@
-import { IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator'
+import {
+  IsBoolean,
+  IsEmail,
+  IsEmpty,
+  IsEnum,
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MinLength,
+} from 'class-validator';
 import { UserRole } from '../../common/enums/user-role.enum';
 
-export class RegisterDto {
+// DTO BASE para campos comunes
+export abstract class RegisterDto {
   @IsOptional()
   @IsUUID()
   userId?: string;
@@ -14,42 +26,30 @@ export class RegisterDto {
   @IsNotEmpty()
   name!: string;
 
-  @IsOptional()
   @IsString()
-  birthDate?: string;
+  @IsNotEmpty()
+  birthDate!: string;
 
   @IsEmail()
   email!: string;
 
   @IsString()
   @IsNotEmpty()
+  @MinLength(6)
   password!: string;
 
-  @IsOptional()
   @IsString()
-  address?: string;
+  confirmPassword!: string;
 
-  @IsOptional()
   @IsString()
-  phone?: string;
+  @IsNotEmpty()
+  address!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  phone!: string;
 
   @IsEnum(UserRole)
+  @IsIn(['client', 'provider'])
   rol!: UserRole;
-
-  @IsOptional()
-  @IsString()
-  paymentMethod?: string | null;
-
-  @IsOptional()
-  @IsUUID()
-  suscriptionId?: string;
-
-  @IsOptional()
-  @IsUUID()
-  providerId?: string;
-
-  @IsBoolean()
-  isActive!: boolean;
 }
-
-

@@ -7,10 +7,12 @@ import { Column, ManyToOne, JoinColumn, ChildEntity } from 'typeorm';
 // @ChildEntity('providers')
 // ===== FIN CÓDIGO ORIGINAL =====
 
-// ===== NUEVA CONFIGURACIÓN PARA HERENCIA =====
-@ChildEntity('provider') // Especificar valor explícito del discriminador
-// ===== FIN NUEVA CONFIGURACIÓN =====
+
+@ChildEntity('provider')
 export class ServiceProvider extends User {
+  @Column('text', { nullable: true })
+  serviceType: string;
+
   @Column('text', { nullable: true })
   bio: string;
 

@@ -2,9 +2,10 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { Client } from '../clients/entities/client.entity';
+import { Client } from 'src/clients/entities/client.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { RegisterClientDto } from './dto/register-client.dto';
 
 @Injectable()
 export class AuthRepository {
@@ -17,52 +18,44 @@ export class AuthRepository {
     private readonly providerRepository: Repository<ServiceProvider>,
   ) {}
 
-  async create(userData: Partial<User>): Promise<User> {
-    // ===== CÓDIGO ORIGINAL (COMENTADO PARA ROLLBACK) =====
-    // const user = this.userRepository.create(userData);
-    // return await this.userRepository.save(user);
-    // ===== FIN CÓDIGO ORIGINAL =====
+  async createClient(
+    clientData: Partial<User> & Partial<RegisterClientDto>,
+  ): Promise<User> {
+    // Calcular servicios según el plan seleccionado
+    const getServicesByPlan = (subscription: string | undefined): number => {
+      switch (subscription) {
+        case 'basic':
+          return 5;
+        case 'standard':
+          return 10;
+        case 'premium':
+          return 15;
+        default:
+          return 5; // Plan básico por defecto
+      }
+    };
 
-    // ===== NUEVA IMPLEMENTACIÓN CON HERENCIA =====
-    const { rol } = userData;
+    const enhancedClientData = {
+      ...clientData,
+      rol: UserRole.client, // Forzar rol de cliente
+      servicesLeft: getServicesByPlan(clientData.subscription as string),
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días
+      paymentStatus: false,
+    };
 
-    switch (rol) {
-      case UserRole.client:
-        const clientData = {
-          ...userData,
-          //los servicios iniciales dependerán del plan que se elija en el frontend (basic =5, standard=10, premium=15)
-          // servicesLeft: userData.plan === 'basic' ? 5 : userData.plan === 'standard' ? 10: 15,
-          servicesLeft: 5,
-          startDate: new Date(),
-          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Fecha de fin de la suscripción (30 días después)
-          paymentStatus: false,
-        };
+    const client = this.clientRepository.create(enhancedClientData);
+    return await this.clientRepository.save(client);
+  }
 
-        const client = this.clientRepository.create(clientData);
-        return await this.clientRepository.save(client);
+  async createProvider(providerData: Partial<User>): Promise<User> {
+    const enhancedProviderData = {
+      ...providerData,
+      rol: UserRole.provider, // Forzar rol de proveedor
+    };
 
-      case UserRole.provider:
-        const providerData = {
-          ...userData,
-          bio: '',
-          dias: [], // Corregido: era "días"
-          horarios: [], // Corregido: era "horario"
-          // categories: [], // Comentado: se maneja por relación
-        };
-
-        const provider = this.providerRepository.create(providerData);
-        return await this.providerRepository.save(provider);
-
-      //El usuario admin no se crea desde el registro, solo puede ser asignado por otro admin o por el sistema
-      case UserRole.admin:
-        throw new BadRequestException(
-          'No se puede crear un usuario admin desde el registro',
-        );
-
-      default:
-        throw new BadRequestException(`Rol: ${rol} no válido`);
-    }
-    // ===== FIN NUEVA IMPLEMENTACIÓN =====
+    const provider = this.providerRepository.create(enhancedProviderData);
+    return await this.providerRepository.save(provider);
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -77,17 +70,6 @@ export class AuthRepository {
     externalAuthId: string,
     userData: Partial<User>,
   ): Promise<User> {
-    // ===== CÓDIGO ORIGINAL (COMENTADO PARA ROLLBACK) =====
-    // const existing = await this.findByExternalAuthId(externalAuthId);
-    // if (existing) {
-    //   const merged = this.userRepository.merge(existing, userData);
-    //   return await this.userRepository.save(merged);
-    // }
-    // const created = this.userRepository.create({ ...userData, externalAuthId });
-    // return await this.userRepository.save(created);
-    // ===== FIN CÓDIGO ORIGINAL =====
-
-    // ===== NUEVA IMPLEMENTACIÓN CON HERENCIA =====
     const existing = await this.findByExternalAuthId(externalAuthId);
     if (existing) {
       // Para updates, usar el repositorio correcto según el rol existente
@@ -109,9 +91,11 @@ export class AuthRepository {
           return await this.userRepository.save(merged);
       }
     }
-    // Si no existe, crear nuevo usando el método create que ya maneja los roles
-    return await this.create({ ...userData, externalAuthId });
-    // ===== FIN NUEVA IMPLEMENTACIÓN =====
+    // Si no existe, crear nuevo usando métodos específicos según rol
+    const dataWithAuth = { ...userData, externalAuthId };
+
+    // Para Auth0, por defecto crear como cliente (puede ajustarse según lógica de negocio)
+    return await this.createClient(dataWithAuth);
   }
 
   async findById(id: string): Promise<User | null> {
