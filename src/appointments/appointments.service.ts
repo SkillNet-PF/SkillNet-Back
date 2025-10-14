@@ -138,24 +138,26 @@ export class AppointmentsService {
     const query = this.appointmentRepository
       .createQueryBuilder('appointment')
       .leftJoinAndSelect('appointment.provider', 'provider')
+      .leftJoinAndSelect('appointment.UserClient', 'client')
       .leftJoinAndSelect('appointment.category', 'category')
       
       
      if (authUser.rol === UserRole.client) {
-      query.where('appointment.UserClientId = :userId', { userId: user.userId });
+      query.where('client.userId = :userId', { userId: user.userId });
     } else if (authUser.rol === UserRole.provider) {
-      query.where('appointment.UserProviderId = :userId', { userId: user.userId });
+      query.where('provider.userId = :userId', { userId: user.userId });
     }
      if (filters.status) {
         query.andWhere('appointment.status = :status', { status: filters.status });
       }
 
       if (filters.category) {
-        query.andWhere('category.name = :category', { category: filters.category });
+        query.andWhere('category.Name = :category', { category: filters.category });
      }
 
       if (filters.providerId) {
-       query.andWhere('provider.id = :providerId', { providerId: filters.providerId });
+        
+       query.andWhere('provider.name = :provider', { provider:  filters.provider });
      }
     
       query.orderBy('appointment.AppointmentDate', 'DESC');

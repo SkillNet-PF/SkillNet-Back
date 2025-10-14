@@ -41,7 +41,7 @@ import { SubscriptionModule } from './subscription/subscription.module';
           dropSchema: false,
           synchronize: true,
           autoLoadEntities: true,
-          logging: true,
+          logging: false,
         
         } as any;
       },
