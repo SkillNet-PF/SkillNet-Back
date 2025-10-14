@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Param, Delete, Query, Req, UseGuards, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Req, UseGuards } from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
-import { Roles } from 'src/auth/roles.decorator';
 
+@UseGuards(JwtAuthGuard)
 @Controller('appointments')
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
@@ -12,9 +12,9 @@ export class AppointmentsController {
   // @Roles()
   // @UseGuards(JwtAuthGuard)
   @Post()
-  createAppointment(@Body() createAppointmentDto: CreateAppointmentDto, @Req() request) {
-    const user = request.user
-    return this.appointmentsService.createAppointment(createAppointmentDto, user);
+  createAppointment(@Body() createAppointmentDto: CreateAppointmentDto) {
+    // Respuesta temporal para evitar 404 mientras se implementa lógica
+    return { ok: true, message: 'Appointment creation is under construction' };
   }
 
   @UseGuards(JwtAuthGuard)

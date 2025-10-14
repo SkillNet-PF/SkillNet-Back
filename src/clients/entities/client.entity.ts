@@ -7,9 +7,7 @@ import { Column, ChildEntity, ManyToOne, JoinColumn } from 'typeorm';
 // @ChildEntity({ name: 'CLIENTS' })
 // ===== FIN CÓDIGO ORIGINAL =====
 
-// ===== NUEVA CONFIGURACIÓN PARA HERENCIA =====
-@ChildEntity('client') // Especificar valor explícito del discriminador
-// ===== FIN NUEVA CONFIGURACIÓN =====
+@ChildEntity('client')
 export class Client extends User {
   // Hereda de User: userId, imgProfile, name, birthDate, email, externalAuthId, address, phone, rol, isActive
 

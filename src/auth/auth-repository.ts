@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { Client } from '../clients/entities/client.entity';
+import { Client } from 'src/clients/entities/client.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { RegisterClientDto } from './dto/register-client.dto';
@@ -46,6 +46,16 @@ export class AuthRepository {
 
     const client = this.clientRepository.create(enhancedClientData);
     return await this.clientRepository.save(client);
+  }
+
+  async createProvider(providerData: Partial<User>): Promise<User> {
+    const enhancedProviderData = {
+      ...providerData,
+      rol: UserRole.provider, // Forzar rol de proveedor
+    };
+
+    const provider = this.providerRepository.create(enhancedProviderData);
+    return await this.providerRepository.save(provider);
   }
 
   async findByEmail(email: string): Promise<User | null> {

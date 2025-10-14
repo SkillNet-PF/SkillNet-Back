@@ -11,7 +11,12 @@ import {
 import { RegisterClientDto } from '../../auth/dto/register-client.dto';
 
 export class UpdateClientDto extends PartialType(
-  OmitType(RegisterClientDto, ['userId', 'email', 'rol', 'isActive'] as const),
+  OmitType(RegisterDto, [
+    'userId',
+    'email',
+    'rol',
+    'isActive',
+  ] as const),
 ) {
   @ApiProperty({
     enum: ['basic', 'standard', 'premium'],

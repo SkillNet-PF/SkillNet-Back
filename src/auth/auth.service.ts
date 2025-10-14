@@ -1,11 +1,12 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { RegisterDto } from './dto/register.dto';
 import { RegisterClientDto } from './dto/register-client.dto';
+import { ProviderRegisterDto } from './dto/provider-register.dto';
 import { LoginDto } from './dto/login.dto';
 import { User } from './entities/user.entity';
 import { AuthRepository } from './auth-repository';
 import { SupabaseService } from './supabase/supabase.service';
+import { UserRole } from '../common/enums/user-role.enum';
 
 @Injectable()
 export class AuthService {
@@ -50,6 +51,28 @@ export class AuthService {
     };
   }
 
+  async registerProvider(payload: ProviderRegisterDto): Promise<{ user: User; accessToken: string }> {
+    const { email, password } = payload;
+    
+    const { data, error } = await this.supabase.signUpWithEmail(email, password);
+    if (error) {
+      throw new UnauthorizedException(`Error creando proveedor en Supabase: ${error.message}`);
+    }
+
+    const externalAuthId = data.user?.id ?? '';
+    
+    const providerData: Partial<User> = {
+      ...payload,
+      externalAuthId,
+      rol: UserRole.provider,
+    };
+
+    const createdProvider = await this.authRepository.createProvider(providerData);
+    const accessToken = await this.signJwt(createdProvider);
+    
+    return { user: createdProvider, accessToken };
+  }
+
   async login(payload: LoginDto): Promise<{ user: User; accessToken: string }> {
     const { email, password } = payload;
     const { data, error } = await this.supabase.signInWithEmail(
@@ -72,9 +95,7 @@ export class AuthService {
     return this.jwtService.signAsync({ sub: userId, email, rol });
   }
 
-  async upsertFromAuth0Profile(
-    auth0User: any,
-  ): Promise<{ user: User; accessToken: string }> {
+  async upsertFromAuth0Profile(auth0User: any): Promise<{ user: User; accessToken: string }> {
     const externalAuthId: string = auth0User?.sub ?? '';
     const email: string = auth0User?.email ?? '';
     const name: string = auth0User?.name ?? auth0User?.nickname ?? '';
@@ -88,6 +109,7 @@ export class AuthService {
       email,
       name,
       imgProfile,
+      rol: UserRole.client, // Default to client
     };
 
     const user = await this.authRepository.upsertByExternalAuthId(
@@ -96,5 +118,18 @@ export class AuthService {
     );
     const accessToken = await this.signJwt(user);
     return { user, accessToken };
+  }
+
+  async me(userId: string): Promise<User | null> {
+    return this.authRepository.findById(userId);
+  }
+
+  async uploadAvatar(userId: string, file: any): Promise<{ user: User; imgProfile: string }> {
+    if (!file || !file.buffer || !file.originalname) {
+      throw new UnauthorizedException('Invalid file');
+    }
+    const imgUrl = await this.supabase.uploadUserImage(userId, file.buffer, file.originalname);
+    const user = await this.authRepository.update(userId, { imgProfile: imgUrl }) as User;
+    return { user, imgProfile: imgUrl };
   }
 }

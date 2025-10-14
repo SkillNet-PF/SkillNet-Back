@@ -1,5 +1,5 @@
 import { Appointment } from 'src/appointments/entities/appointment.entity';
-import { Categories } from 'src/appointments/entities/categories.entity';
+import { Categories } from 'src/categories/entities/categories.entity';
 import { User } from 'src/auth/entities/user.entity';
 import { Column, ManyToOne, JoinColumn, ChildEntity } from 'typeorm';
 
@@ -7,10 +7,12 @@ import { Column, ManyToOne, JoinColumn, ChildEntity } from 'typeorm';
 // @ChildEntity('providers')
 // ===== FIN CÓDIGO ORIGINAL =====
 
-// ===== NUEVA CONFIGURACIÓN PARA HERENCIA =====
-@ChildEntity('provider') // Especificar valor explícito del discriminador
-// ===== FIN NUEVA CONFIGURACIÓN =====
+
+@ChildEntity('provider')
 export class ServiceProvider extends User {
+  @Column('text', { nullable: true })
+  serviceType: string;
+
   @Column('text', { nullable: true })
   bio: string;
 

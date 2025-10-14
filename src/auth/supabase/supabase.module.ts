@@ -12,7 +12,11 @@ import { SupabaseService } from '../supabase/supabase.service';
       inject: [ConfigService],
       useFactory: (configService: ConfigService): SupabaseClient => {
         const rawUrl = configService.get<string>('SUPABASE_URL') ?? process.env.SUPABASE_URL ?? '';
-        const rawKey = configService.get<string>('SUPABASE_ANON_KEY') ?? process.env.SUPABASE_ANON_KEY ?? '';
+        const rawKey =
+          configService.get<string>('SUPABASE_SERVICE_ROLE_KEY') ??
+          process.env.SUPABASE_SERVICE_ROLE_KEY ??
+          configService.get<string>('SUPABASE_ANON_KEY') ??
+          process.env.SUPABASE_ANON_KEY ?? '';
         const url = rawUrl.trim().replace(/\/$/, '');
         const key = rawKey.trim();
         if (!url) throw new Error('SUPABASE_URL is required');

@@ -7,52 +7,55 @@ import {
   Post,
   Req,
   UseGuards,
+  Get,
 } from '@nestjs/common';
-import { Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
 import { RegisterClientDto } from './dto/register-client.dto';
+import { ProviderRegisterDto } from './dto/provider-register.dto';
 import { LoginDto } from './dto/login.dto';
 import { Auth0Guard } from 'src/guards/auth0.guard';
-import { ApiBearerAuth, ApiBody, ApiOperation } from '@nestjs/swagger';
 import { UserRole } from 'src/common/enums/user-role.enum';
-@ApiBearerAuth()
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('registerClient')
+  @ApiOperation({ summary: 'Registrar nuevo cliente' })
   async registerClient(@Body() dto: RegisterClientDto) {
     return this.authService.registerClient(dto);
   }
 
+  @Post('registerProvider')
+  @ApiOperation({ summary: 'Registrar nuevo proveedor' })
+  async registerProvider(@Body() dto: ProviderRegisterDto) {
+    return this.authService.registerProvider(dto);
+  }
+
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Iniciar sesión' })
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }
 
-  @Post('auth0/register')
+  @Post('auth0/register/client')
   @UseGuards(Auth0Guard)
   @HttpCode(HttpStatus.CREATED)
-  async auth0Register(@Req() req: any) {
+  @ApiOperation({ summary: 'Registrar cliente via Auth0' })
+  async auth0RegisterClient(@Req() req) {
     const auth0User = req.oidc?.user;
     return this.authService.upsertFromAuth0Profile(auth0User);
   }
 
-  @Get('auth0/register')
+  @Post('auth0/register/provider') 
   @UseGuards(Auth0Guard)
-  async auth0RegisterGet(@Req() req: any) {
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Registrar proveedor via Auth0' })
+  async auth0RegisterProvider(@Req() req) {
     const auth0User = req.oidc?.user;
     return this.authService.upsertFromAuth0Profile(auth0User);
-  }
-
-  @Get('auth0/session')
-  async auth0Session(@Req() req: any) {
-    const isAuthenticated = req.oidc?.isAuthenticated?.() ?? false;
-    return {
-      isAuthenticated,
-      user: isAuthenticated ? req.oidc?.user : null,
-    };
   }
 }
