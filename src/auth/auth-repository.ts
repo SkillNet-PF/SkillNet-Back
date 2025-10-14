@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -11,6 +11,10 @@ export class AuthRepository {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Client)
+    private readonly clientRepository: Repository<Client>,
+    @InjectRepository(ServiceProvider)
+    private readonly providerRepository: Repository<ServiceProvider>,
   ) {}
 
   async create(userData: Partial<User>): Promise<User> {
@@ -37,13 +41,41 @@ export class AuthRepository {
     externalAuthId: string,
     userData: Partial<User>,
   ): Promise<User> {
+    // ===== CÓDIGO ORIGINAL (COMENTADO PARA ROLLBACK) =====
+    // const existing = await this.findByExternalAuthId(externalAuthId);
+    // if (existing) {
+    //   const merged = this.userRepository.merge(existing, userData);
+    //   return await this.userRepository.save(merged);
+    // }
+    // const created = this.userRepository.create({ ...userData, externalAuthId });
+    // return await this.userRepository.save(created);
+    // ===== FIN CÓDIGO ORIGINAL =====
+
+    // ===== NUEVA IMPLEMENTACIÓN CON HERENCIA =====
     const existing = await this.findByExternalAuthId(externalAuthId);
     if (existing) {
-      const merged = this.userRepository.merge(existing, userData);
-      return await this.userRepository.save(merged);
+      // Para updates, usar el repositorio correcto según el rol existente
+      switch (existing.rol) {
+        case UserRole.client:
+          const mergedClient = this.clientRepository.merge(
+            existing as Client,
+            userData,
+          );
+          return await this.clientRepository.save(mergedClient);
+        case UserRole.provider:
+          const mergedProvider = this.providerRepository.merge(
+            existing as ServiceProvider,
+            userData,
+          );
+          return await this.providerRepository.save(mergedProvider);
+        default:
+          const merged = this.userRepository.merge(existing, userData);
+          return await this.userRepository.save(merged);
+      }
     }
-    const created = this.userRepository.create({ ...userData, externalAuthId });
-    return await this.userRepository.save(created);
+    // Si no existe, crear nuevo usando el método create que ya maneja los roles
+    return await this.create({ ...userData, externalAuthId });
+    // ===== FIN NUEVA IMPLEMENTACIÓN =====
   }
 
   async findById(id: string): Promise<User | null> {

@@ -28,14 +28,8 @@ import { AuthRepository } from './auth-repository';
     }),
     SupabaseModule,
   ],
-  providers: [
-    AuthService,
-    JwtStrategy,
-    AuthRepository,
-  ],
+  providers: [AuthService, JwtStrategy, AuthRepository],
   controllers: [AuthController],
   exports: [AuthService, AuthRepository],
 })
 export class AuthModule {}
-
-

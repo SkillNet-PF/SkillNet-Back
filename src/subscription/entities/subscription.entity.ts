@@ -2,8 +2,8 @@ import { Column, Entity, PrimaryColumn } from "typeorm";
 import {v4 as uuid} from 'uuid'
 
 
-@Entity('suscriptions')
-export class suscriptions{
+@Entity('subscriptions')
+export class subscriptions{
     @PrimaryColumn('uuid')
     SuscriptionID: string = uuid();
 
@@ -14,7 +14,7 @@ export class suscriptions{
     Descption:string;
 
     @Column()
-    Services:number;
+    monthlyServices:number;
 
     @Column()
     price:number
