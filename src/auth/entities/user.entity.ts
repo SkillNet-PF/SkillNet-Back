@@ -6,8 +6,7 @@ import {
   TableInheritance,
 } from 'typeorm';
 import { UserRole } from '../../common/enums/user-role.enum';
-import {v4 as uuid} from 'uuid'
-import { IsIn, isIn } from 'class-validator';
+import { v4 as uuid } from 'uuid';
 
 // ===== CONFIGURACIÓN ORIGINAL (COMENTADA PARA ROLLBACK) =====
 // @TableInheritance({ column: { type: 'enum', name: 'rol' } })
@@ -30,8 +29,8 @@ export abstract class User {
   @Column()
   name!: string;
 
-  @Column({ nullable: true })
-  birthDate?: string;
+  @Column({ nullable: false })
+  birthDate!: string;
 
   @Column({ unique: true })
   email!: string;
@@ -39,17 +38,16 @@ export abstract class User {
   @Column()
   externalAuthId!: string;
 
-  @Column({ nullable: true })
-  address?: string;
+  @Column({ nullable: false })
+  address!: string;
 
-  @Column({ nullable: true })
-  phone?: string;
+  @Column({ nullable: false })
+  phone!: string;
 
   @Column({
     type: 'enum',
     enum: UserRole,
   })
-  @IsIn(['client', 'provider'])
   rol!: UserRole;
 
   @Column({ default: true })

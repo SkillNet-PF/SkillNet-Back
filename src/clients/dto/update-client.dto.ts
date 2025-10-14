@@ -8,17 +8,10 @@ import {
   Matches,
   MaxLength,
 } from 'class-validator';
-import { RegisterDto } from '../../auth/dto/register.dto';
+import { RegisterClientDto } from '../../auth/dto/register-client.dto';
 
 export class UpdateClientDto extends PartialType(
-  OmitType(RegisterDto, [
-    'userId',
-    'email',
-    'rol',
-    'isActive',
-    'paymentMethod',
-    'providerId',
-  ] as const),
+  OmitType(RegisterClientDto, ['userId', 'email', 'rol', 'isActive'] as const),
 ) {
   @ApiProperty({
     enum: ['basic', 'standard', 'premium'],

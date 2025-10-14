@@ -113,7 +113,7 @@ export class ClientsController {
     return this.clientsService.getAllClients(5, 10, filters);
   }
 
-  @Get(':id')
+  @Get('profile/:id')
   @Roles(UserRole.admin, UserRole.client)
   @ApiOperation({
     summary: 'Obtener perfil de cliente',
