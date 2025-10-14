@@ -7,6 +7,7 @@ import { User } from 'src/auth/entities/user.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 import { Client } from 'pg';
 import { Categories } from '../categories/entities/categories.entity';
+import { DataMigrationService } from './data-migration.service';
 
 @Module({
   imports: [
@@ -19,6 +20,6 @@ import { Categories } from '../categories/entities/categories.entity';
     ]),
   ],
   controllers: [AppointmentsController],
-  providers: [AppointmentsService],
+  providers: [AppointmentsService, DataMigrationService],
 })
 export class AppointmentsModule {}

@@ -15,11 +15,22 @@ import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { DataMigrationService } from './data-migration.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('appointments')
 export class AppointmentsController {
-  constructor(private readonly appointmentsService: AppointmentsService) {}
+  constructor(
+    private readonly appointmentsService: AppointmentsService,
+    private readonly dataMigrationService: DataMigrationService,
+  ) {}
+
+  // Temporary endpoint to run data migration
+  @Post('migrate-data')
+  async migrateData() {
+    await this.dataMigrationService.cleanAppointmentsData();
+    return { message: 'Data migration completed successfully' };
+  }
 
   // @Roles()
   // @UseGuards(JwtAuthGuard)
