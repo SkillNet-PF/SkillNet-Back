@@ -37,9 +37,9 @@ import { SubscriptionModule } from './subscription/subscription.module';
           username,
           password,
           database,
-          dropSchema: false, // ✅ ACTIVAR DROP SCHEMA SOLO EN DESARROLLO
+          dropSchema: true, // ✅ ACTIVAR DROP SCHEMA SOLO EN DESARROLLO (mantenemos tu config)
           synchronize: true,
-          logging: false, // ✅ ACTIVAR LOGGING SQL
+          logging: true, // ✅ ACTIVAR LOGGING SQL (mantenemos tu config)
           autoLoadEntities: true,
         } as any;
       },
