@@ -13,7 +13,7 @@ import {
 } from 'typeorm';
 
 
-@ChildEntity({ name: 'CLIENTS' })
+@ChildEntity('client')
 export class Client extends User {
 
   

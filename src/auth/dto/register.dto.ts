@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator'
+import { IsEmail, IsEnum, IsIn, IsNotEmpty, IsOptional, IsString, IsUUID, MinLength, IsEmpty, IsBoolean } from 'class-validator'
 import { UserRole } from '../../common/enums/user-role.enum';
 
 export class RegisterDto {
@@ -23,7 +23,11 @@ export class RegisterDto {
 
   @IsString()
   @IsNotEmpty()
+  @MinLength(6)
   password!: string;
+
+  @IsString()
+  confirmPassword!: string;
 
   @IsOptional()
   @IsString()
@@ -34,22 +38,13 @@ export class RegisterDto {
   phone?: string;
 
   @IsEnum(UserRole)
+  @IsIn(['client', 'provider'])
   rol!: UserRole;
 
-  @IsOptional()
-  @IsString()
-  paymentMethod?: string | null;
-
-  @IsOptional()
-  @IsUUID()
-  suscriptionId?: string;
-
-  @IsOptional()
-  @IsUUID()
-  providerId?: string;
-
+  @IsEmpty() //Esto hace que isActive se establezca automáticamente como true en el backend
   @IsBoolean()
-  isActive!: boolean;
+  isActive: boolean;
 }
+
 
 
