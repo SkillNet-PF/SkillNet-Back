@@ -25,11 +25,11 @@ export class AuthController {
     schema: {
       type: 'object',
       properties: {
-        userId: {
-          type: 'string',
-          format: 'uuid',
-          example: 'a0c14a54-1234-4a6b-9db2-87f3d523f4c3',
-        },
+        //userId: {
+          //type: 'string',
+          //format: 'uuid',
+          //example: 'a0c14a54-1234-4a6b-9db2-87f3d523f4c3',
+        //},
         imgProfile: {
           type: 'string',
           example: 'https://cdn.miapp.com/users/avatar.jpg',
@@ -73,11 +73,11 @@ export class AuthController {
           //format: 'uuid',
           //example: 'b1f97e61-4321-4c7a-bf42-18a0f2c547f2',
         //},
-        providerId: {
-          type: 'string',
-          format: 'uuid',
-          example: 'bbf2451e-7777-4d21-bcc5-bfbdc45ff123',
-        },
+        //providerId: {
+          //type: 'string',
+          //format: 'uuid',
+          //example: 'bbf2451e-7777-4d21-bcc5-bfbdc45ff123',
+        //},
         //isActive: {
           //type: 'boolean',
           //example: true,
@@ -91,6 +91,29 @@ export class AuthController {
   }
 
   @Post('login')
+  @ApiOperation({
+  summary: 'Loggear usuario',
+  description: 'Permite a un usuario iniciar sesión con su email y contraseña',
+})
+@ApiBody({
+  description: 'Datos para loggearse',
+  required: true,
+  schema: {
+    type: 'object',
+    properties: {
+      email: {
+        type: 'string',
+        example: 'josemartinez@example.com',
+      },
+      password: {
+        type: 'string',
+        example: 'MiContraseñaSegura123',
+      },
+    },
+    required: ['email', 'password'], 
+  },
+})
+
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
