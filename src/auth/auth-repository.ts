@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { Client } from '../clients/entities/client.entity';
+import { Client } from 'src/clients/entities/client.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
 
@@ -18,53 +18,15 @@ export class AuthRepository {
   ) {}
 
   async create(userData: Partial<User>): Promise<User> {
-    // ===== CÓDIGO ORIGINAL (COMENTADO PARA ROLLBACK) =====
-    // const user = this.userRepository.create(userData);
-    // return await this.userRepository.save(user);
-    // ===== FIN CÓDIGO ORIGINAL =====
-
-    // ===== NUEVA IMPLEMENTACIÓN CON HERENCIA =====
-    const { rol } = userData;
-
-    switch (rol) {
-      case UserRole.client:
-        const clientData = {
-          ...userData,
-          // isActive se establece automáticamente por @Column({ default: true })
-          //los servicios iniciales dependerán del plan que se elija en el frontend (basic =5, standard=10, premium=15)
-          // servicesLeft: userData.plan === 'basic' ? 5 : userData.plan === 'standard' ? 10: 15,
-          servicesLeft: 5,
-          startDate: new Date(),
-          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Fecha de fin de la suscripción (30 días después)
-          paymentStatus: false,
-        };
-
-        const client = this.clientRepository.create(clientData);
-        return await this.clientRepository.save(client);
-
-      case UserRole.provider:
-        const providerData = {
-          ...userData,
-          // isActive se establece automáticamente por @Column({ default: true })
-          bio: '',
-          dias: [], // Corregido: era "días"
-          horarios: [], // Corregido: era "horario"
-          // categories: [], // Comentado: se maneja por relación
-        };
-
-        const provider = this.providerRepository.create(providerData);
-        return await this.providerRepository.save(provider);
-
-      //El usuario admin no se crea desde el registro, solo puede ser asignado por otro admin o por el sistema
-      case UserRole.admin:
-        throw new BadRequestException(
-          'No se puede crear un usuario admin desde el registro',
-        );
-
-      default:
-        throw new BadRequestException(`Rol: ${rol} no válido`);
+    const role = userData.rol ?? UserRole.client;
+    if (role === UserRole.provider) {
+      const providerRepo = this.userRepository.manager.getRepository(ServiceProvider);
+      const provider = providerRepo.create(userData as Partial<ServiceProvider>);
+      return await providerRepo.save(provider);
     }
-    // ===== FIN NUEVA IMPLEMENTACIÓN =====
+    const clientRepo = this.userRepository.manager.getRepository(Client);
+    const client = clientRepo.create(userData as Partial<Client>);
+    return await clientRepo.save(client);
   }
 
   async findByEmail(email: string): Promise<User | null> {

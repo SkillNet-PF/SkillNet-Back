@@ -7,6 +7,17 @@ import { createAuth0Middleware } from './config/auth.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // Enable CORS for local Vite dev server and production environments
+  app.enableCors({
+    origin: [
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      process.env.FRONTEND_ORIGIN ?? ''
+    ].filter(Boolean),
+    credentials: true,
+    methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+    allowedHeaders: ['Content-Type','Authorization']
+  });
   app.use(createAuth0Middleware());
   app.useGlobalPipes(
     new ValidationPipe({
