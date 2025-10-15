@@ -11,12 +11,33 @@ import { SupabaseService } from '../supabase/supabase.service';
       provide: 'SUPABASE_CLIENT',
       inject: [ConfigService],
       useFactory: (configService: ConfigService): SupabaseClient => {
-        const rawUrl = configService.get<string>('SUPABASE_URL') ?? process.env.SUPABASE_URL ?? '';
-        const rawKey =
+        const rawUrl =
+          configService.get<string>('SUPABASE_URL') ??
+          process.env.SUPABASE_URL ??
+          '';
+        const serviceRoleKey =
           configService.get<string>('SUPABASE_SERVICE_ROLE_KEY') ??
-          process.env.SUPABASE_SERVICE_ROLE_KEY ??
+          process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const anonKey =
           configService.get<string>('SUPABASE_ANON_KEY') ??
-          process.env.SUPABASE_ANON_KEY ?? '';
+          process.env.SUPABASE_ANON_KEY;
+        const rawKey = serviceRoleKey ?? anonKey ?? '';
+
+        console.log(
+          '🔑 [SUPABASE] Service Role Key disponible:',
+          !!serviceRoleKey,
+        );
+        console.log(
+          '🔑 [SUPABASE] Service Role Key:',
+          serviceRoleKey
+            ? `${serviceRoleKey.slice(0, 30)}...`
+            : 'NO ENCONTRADA',
+        );
+        console.log(
+          '🔑 [SUPABASE] Usando clave:',
+          rawKey ? `${rawKey.slice(0, 30)}...` : 'NINGUNA',
+        );
+
         const url = rawUrl.trim().replace(/\/$/, '');
         const key = rawKey.trim();
         if (!url) throw new Error('SUPABASE_URL is required');
@@ -29,5 +50,3 @@ import { SupabaseService } from '../supabase/supabase.service';
   exports: ['SUPABASE_CLIENT', SupabaseService],
 })
 export class SupabaseModule {}
-
-

@@ -19,7 +19,12 @@ import { LoginDto } from './dto/login.dto';
 import { Auth0Guard } from 'src/guards/auth0.guard';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
-import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -90,7 +95,20 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('avatar'))
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Subir imagen de perfil del usuario' })
+  @ApiOperation({ summary: 'Subir imagen de perfil de usuario' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Archivo de imagen para el avatar del usuario',
+    schema: {
+      type: 'object',
+      properties: {
+        avatar: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
   async uploadAvatar(@Req() req, @UploadedFile() file: any) {
     const userId = req.user?.userId;
 
