@@ -17,8 +17,13 @@ export class SupabaseService {
     return this.supabase.auth.signInWithPassword({ email, password });
   }
 
-  async uploadUserImage(userId: string, fileBuffer: Buffer, fileName: string): Promise<string> {
-    const bucket = this.config.get<string>('SUPABASE_STORAGE_BUCKET')?.trim() || 'avatars';
+  async uploadUserImage(
+    userId: string,
+    fileBuffer: Buffer,
+    fileName: string,
+  ): Promise<string> {
+    const bucket =
+      this.config.get<string>('SUPABASE_STORAGE_BUCKET')?.trim() || 'avatars';
     try {
       const sanitized = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
       const path = `users/${userId}/${Date.now()}_${sanitized}`;
@@ -39,5 +44,3 @@ export class SupabaseService {
     }
   }
 }
-
-
