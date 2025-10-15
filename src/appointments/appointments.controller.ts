@@ -15,14 +15,17 @@ import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { UserRole } from 'src/common/enums/user-role.enum';
+import { RolesGuard } from 'src/guards/roles.guard';
 
 
 @Controller('appointments')
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
-  // @Roles()
-  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.client)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Post()
   createAppointment(@Body() createAppointmentDto: CreateAppointmentDto, @Req() request) {
     const user = request.user;
@@ -30,6 +33,7 @@ export class AppointmentsController {
     return this.appointmentsService.createAppointment(createAppointmentDto, user);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   findUserAppointmens(
     @Req() request,
@@ -52,18 +56,22 @@ export class AppointmentsController {
     return this.appointmentsService.findUserAppointments(1, 5, filters, user);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string, @Req() request) {
     const user = request.user;
     return this.appointmentsService.findOne(id, user);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Put(':id')
   update(
     @Param('id') id: string,
     @Body() updateAppointmentDto: UpdateAppointmentDto,
+    @Req() request
   ) {
-    return this.appointmentsService.update(+id, updateAppointmentDto);
+    const user = request.user;
+    return this.appointmentsService.update(+id, updateAppointmentDto, user);
   }
 
   @Delete(':id')

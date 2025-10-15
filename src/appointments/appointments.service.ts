@@ -50,6 +50,7 @@ export class AppointmentsService {
       throw new BadRequestException(
         'Must be a client to create an appointment',
       );
+    if (client.paymentStatus === false) throw new BadRequestException('you must pay your services to make an appointment')
 
     if (client.servicesLeft === 0) throw new BadRequestException('there are no services left to make this appointment')
     
@@ -64,7 +65,7 @@ export class AppointmentsService {
     if (appointmentDateType<= today) throw new BadRequestException('the appointment date must be later than the current date')
 
 
-    // const categoryFound = await this.categoryRepository.findOneBy({Name: category})
+    const categoryFound = await this.categoryRepository.findOneBy({Name: category})
     const providerFound = await this.userRepository.findOne({
       where: {name: provider, rol: UserRole.provider}, 
     })
@@ -73,10 +74,10 @@ export class AppointmentsService {
 
 
 
-    // if (!categoryFound) throw new NotFoundException('Category not found')
+    if (!categoryFound) throw new NotFoundException('Category not found')
     if (!proveedor) throw new NotFoundException('Provider not found')
 
-    // if (providerFound.category !== categoryFound) throw new BadRequestException(`the provider does not have the category ${category}`)
+    if (proveedor.category !== categoryFound) throw new BadRequestException(`the provider does not have the category ${category}`)
    
     //convierto la fecha en un dia de la semana
     const appointmentDay = appointmentDateType.toLocaleDateString(
@@ -108,7 +109,7 @@ export class AppointmentsService {
     //CREACION DEL APPOINTMENT
     const appointment = new Appointment();
 
-    // appointment.Category = categoryFound;
+    appointment.Category = categoryFound;
     appointment.CreationDate = today;
     appointment.AppointmentDate = appointmentDateType;
     appointment.hour = hour;
@@ -204,8 +205,8 @@ export class AppointmentsService {
     return appointment
   }
 
-  update(id: number, updateAppointmentDto: UpdateAppointmentDto) {
-    return `This action updates a #${id} appointment`;
+  update(id: number, updateAppointmentDto: UpdateAppointmentDto, user) {
+    ;
   }
 
   remove(id: number) {

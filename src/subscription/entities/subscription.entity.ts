@@ -18,4 +18,10 @@ export class subscriptions{
 
     @Column()
     price:number
+
+    @Column({
+        type: 'boolean',
+        default: true
+    })
+    isActive: boolean
 }
