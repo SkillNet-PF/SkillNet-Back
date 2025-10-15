@@ -183,7 +183,25 @@ export class AppointmentsService {
   }
 
   async findOne(id:string, user) {
-    
+    //busco el usuario
+    const authUser = await this.userRepository.findOneBy({
+      userId: user.userId,
+    });
+
+    if (!authUser) throw new NotFoundException('user not found');
+
+    if (authUser.rol != user.rol) throw new BadRequestException('bad request');
+
+
+    const appointment = await this.appointmentRepository.findOne({
+      where: { AppointmentID: id },
+      relations: ['UserClient', 'UserProvider', 'Category'],
+    });
+    if (!appointment) throw new NotFoundException('appointment not found');
+
+    //verifico que el usuario sea el que creo el appointment o el proveedor
+    if(appointment.UserClient.userId !== user.userId && appointment.UserProvider.userId !== user.userId) throw new BadRequestException('bad request')
+    return appointment
   }
 
   update(id: number, updateAppointmentDto: UpdateAppointmentDto) {
