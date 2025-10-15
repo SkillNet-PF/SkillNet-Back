@@ -40,9 +40,9 @@ import { InitialDataSeed } from './seeds/seeds.service';
           username,
           password,
           database,
-          dropSchema: false, // ✅ ACTIVAR DROP SCHEMA SOLO EN DESARROLLO (mantenemos tu config)
+          dropSchema: false, // ✅ ACTIVAR DROP SCHEMA SOLO EN DESARROLLO
           synchronize: true,
-          logging: false, // ✅ ACTIVAR LOGGING SQL (mantenemos tu config)
+          logging: false,
           autoLoadEntities: true,
         } as any;
       },
@@ -65,4 +65,3 @@ export class AppModule implements OnModuleInit {
     await this.seedService.run();
   }
 }
-

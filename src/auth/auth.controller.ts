@@ -8,7 +8,10 @@ import {
   Req,
   UseGuards,
   Get,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
 import { RegisterClientDto } from './dto/register-client.dto';
 import { ProviderRegisterDto } from './dto/provider-register.dto';
@@ -16,7 +19,12 @@ import { LoginDto } from './dto/login.dto';
 import { Auth0Guard } from 'src/guards/auth0.guard';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
-import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -57,5 +65,61 @@ export class AuthController {
   async auth0RegisterProvider(@Req() req) {
     const auth0User = req.oidc?.user;
     return this.authService.upsertFromAuth0Profile(auth0User);
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Obtener datos del usuario actual (cliente o proveedor)',
+  })
+  async me(@Req() req) {
+    const userId = req.user?.userId;
+    const userRole = req.user?.rol;
+
+    if (!userId) {
+      throw new BadRequestException('Usuario no encontrado en el token');
+    }
+
+    const user = await this.authService.me(userId);
+    if (!user) {
+      throw new BadRequestException(
+        'Usuario no encontrado en la base de datos',
+      );
+    }
+
+    return { user };
+  }
+
+  @Post('upload-avatar')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('avatar'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Subir imagen de perfil de usuario' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Archivo de imagen para el avatar del usuario',
+    schema: {
+      type: 'object',
+      properties: {
+        avatar: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  async uploadAvatar(@Req() req, @UploadedFile() file: any) {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new BadRequestException('Usuario no encontrado en el token');
+    }
+
+    if (!file) {
+      throw new BadRequestException('Archivo de imagen requerido');
+    }
+
+    return this.authService.uploadAvatar(userId, file);
   }
 }
