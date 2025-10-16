@@ -13,7 +13,6 @@ import {
 } from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
-import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { UserRole } from 'src/common/enums/user-role.enum';
@@ -29,7 +28,6 @@ export class AppointmentsController {
   @Post()
   createAppointment(@Body() createAppointmentDto: CreateAppointmentDto, @Req() request) {
     const user = request.user;
-    console.log(user);
     return this.appointmentsService.createAppointment(createAppointmentDto, user);
   }
 
@@ -67,15 +65,11 @@ export class AppointmentsController {
   @Put(':id')
   update(
     @Param('id') id: string,
-    @Body() updateAppointmentDto: UpdateAppointmentDto,
+    @Body() status: string,
     @Req() request
   ) {
     const user = request.user;
-    return this.appointmentsService.update(+id, updateAppointmentDto, user);
+    return this.appointmentsService.update(id, status, user);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.appointmentsService.remove(+id);
-  }
 }

@@ -13,6 +13,7 @@ import { UserRole } from 'src/common/enums/user-role.enum';
 import { Client } from 'src/clients/entities/client.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 import { Categories } from '../categories/entities/categories.entity';
+import { Status } from './entities/status.enum';
 
 
 
@@ -50,7 +51,7 @@ export class AppointmentsService {
       throw new BadRequestException(
         'Must be a client to create an appointment',
       );
-    if (client.paymentStatus === false) throw new BadRequestException('you must pay your services to make an appointment')
+    // if (client.paymentStatus === false) throw new BadRequestException('you must pay your services to make an appointment')
 
     if (client.servicesLeft === 0) throw new BadRequestException('there are no services left to make this appointment')
     
@@ -100,6 +101,8 @@ export class AppointmentsService {
     .where('provider.userId = :providerId', { providerId })
     .andWhere('appointment.AppointmentDate = :appointmentDate')
     .andWhere('appointment.hour = :hour', { hour })
+    .andWhere('appointment.status = :status', { status: Status.CONFIRMED })
+    .andWhere('appointment.category = :category', { status: Status.PENDING })
     .setParameter('appointmentDate', appointmentDateType)
     .getOne();
     
@@ -205,11 +208,64 @@ export class AppointmentsService {
     return appointment
   }
 
-  update(id: number, updateAppointmentDto: UpdateAppointmentDto, user) {
-    ;
-  }
+  
+  async update(id: string, status: string, user) {
+    //traigo el user
+    const authUser = await this.userRepository.findOneBy({
+      userId: user.userId,
+    });
 
-  remove(id: number) {
-    return `This action removes a #${id} appointment`;
+    if (!authUser) throw new NotFoundException('user not found');
+
+    //busco el appointment
+    const appointment = await this.appointmentRepository.findOne({
+      where: { AppointmentID: id },
+      relations: ['UserClient', 'UserProvider'],
+    });
+    if (!appointment) throw new NotFoundException('appointment not found');
+
+    //verifico que el usuario sea el que creo el appointment o el proveedor
+    if(appointment.UserClient.userId !== user.userId && appointment.UserProvider.userId !== user.userId) throw new BadRequestException('bad request')
+
+    //verifico que el status que se manda sea valido
+
+    if (status !== Status.CONFIRMED && status !== Status.CANCEL && status !== Status.COMPLETED_PARTIAL && status !== Status.COMPLETED) {
+      throw new BadRequestException('bad request');
+    }
+    
+    //verifico que el status del appointment no sea canceled o completado
+    if (appointment.Status === Status.CANCEL || appointment.Status === Status.COMPLETED) throw new BadRequestException('chan not change the status of a canceled or completed appointment')
+    
+    //cancela el appointment para cliente o proveedor
+    if (status === Status.CANCEL){
+      appointment.Status = Status.CANCEL;
+      const userClient = await this.userRepository.findOneBy({userId: appointment.UserClient.userId})
+      const client = userClient as Client
+
+      client.servicesLeft = client.servicesLeft + 1
+      await this.userRepository.update({userId: client.userId}, client)
+    };
+
+    //confirma el appointment solo para proveedor
+    if (appointment.Status === Status.PENDING && status === Status.CONFIRMED && authUser.rol === UserRole.provider) {
+      if (authUser.userId !== appointment.UserProvider.userId) throw new BadRequestException('Only the provider in the appointment can confirm it');
+      appointment.Status = Status.CONFIRMED;
+
+    }
+
+    if (status === Status.COMPLETED_PARTIAL && appointment.Status === Status.CONFIRMED) {
+      if(authUser.userId !== appointment.UserProvider.userId) throw new BadRequestException('wait until the provider confirm the completion of the appointment');
+      appointment.Status = Status.COMPLETED_PARTIAL;
+    }
+
+    if (status === Status.COMPLETED && appointment.Status === Status.COMPLETED_PARTIAL) {
+      if(authUser.userId !== appointment.UserClient.userId) throw new BadRequestException('Only the client can complete the appointment');
+      appointment.Status = Status.COMPLETED;
+    }
+
+    await this.appointmentRepository.update({ AppointmentID: id }, appointment);
+    return appointment;
   }
+    
+
 }
