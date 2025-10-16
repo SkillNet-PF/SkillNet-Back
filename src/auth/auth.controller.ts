@@ -10,9 +10,15 @@ import {
   Get,
   UseInterceptors,
   UploadedFile,
+  Param,
+  Query,
+  Res,
+  UnauthorizedException,
 } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
+import { AuthRepository } from './auth-repository';
 import { RegisterClientDto } from './dto/register-client.dto';
 import { ProviderRegisterDto } from './dto/provider-register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -65,6 +71,97 @@ export class AuthController {
   async auth0RegisterProvider(@Req() req) {
     const auth0User = req.oidc?.user;
     return this.authService.upsertFromAuth0Profile(auth0User);
+  }
+
+  @Get('auth0/start/:role')
+  @ApiOperation({
+    summary: 'Iniciar flujo OAuth con Auth0',
+    description:
+      'Redirige al usuario a Auth0 para autenticación con Google/GitHub',
+  })
+  async startOAuth(
+    @Param('role') role: string,
+    @Query('connection') connection: string,
+    @Req() req: any,
+    @Res() res: Response,
+  ) {
+    if (role !== 'client' && role !== 'provider') {
+      throw new BadRequestException('Rol debe ser client o provider');
+    }
+
+    const allowedConnections = ['google-oauth2', 'github'];
+    if (connection && !allowedConnections.includes(connection)) {
+      throw new BadRequestException('Conexión no soportada');
+    }
+
+    req.session = req.session || {};
+    req.session.pendingRole = role;
+
+    const auth0Domain = process.env.ISSUER_BASE_URL?.replace(
+      'https://',
+      '',
+    ).replace('/', '');
+    const clientId = process.env.CLIENT_ID;
+    const redirectUri = `${process.env.BASE_URL}auth/auth0/callback`;
+
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: clientId!,
+      redirect_uri: redirectUri,
+      scope: 'openid profile email',
+      state: `role=${role}`,
+    });
+
+    if (connection) {
+      params.append('connection', connection);
+    }
+
+    const authUrl = `https://${auth0Domain}/authorize?${params.toString()}`;
+    return res.redirect(authUrl);
+  }
+
+  @Get('auth0/callback')
+  @ApiOperation({
+    summary: 'Procesar callback OAuth',
+  })
+  async handleOAuthCallback(
+    @Req() req: any,
+    @Res() res: Response,
+    @Query('state') state?: string,
+  ) {
+    if (!req.oidc || !req.oidc.isAuthenticated()) {
+      throw new UnauthorizedException('Usuario no autenticado por Auth0');
+    }
+
+    let userRole: 'client' | 'provider' = 'client';
+
+    if (state && state.includes('role=')) {
+      const roleMatch = state.match(/role=([^&]+)/);
+      const extractedRole = roleMatch ? roleMatch[1] : 'client';
+
+      if (extractedRole === 'client' || extractedRole === 'provider') {
+        userRole = extractedRole;
+      }
+    }
+
+    const auth0User = req.oidc.user;
+    const { sub: externalAuthId, email, name, picture } = auth0User;
+
+    if (!externalAuthId || !email) {
+      throw new BadRequestException('Datos de usuario incompletos');
+    }
+
+    const roleEnum =
+      userRole === 'provider' ? UserRole.provider : UserRole.client;
+    const { user, accessToken } = await this.authService.upsertFromAuth0Profile(
+      auth0User,
+      roleEnum,
+    );
+
+    const frontendUrl = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+    const redirectUrl = `${frontendUrl}/auth/callback?token=${accessToken}&role=${user.rol}`;
+
+    return res.redirect(redirectUrl);
   }
 
   @Get('me')

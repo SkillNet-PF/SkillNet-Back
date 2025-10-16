@@ -1,12 +1,12 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterClientDto } from './dto/register-client.dto';
-import { ProviderRegisterDto } from './dto/provider-register.dto';
 import { LoginDto } from './dto/login.dto';
 import { User } from './entities/user.entity';
 import { AuthRepository } from './auth-repository';
 import { SupabaseService } from './supabase/supabase.service';
 import { UserRole } from '../common/enums/user-role.enum';
+import { ProviderRegisterDto } from './dto/provider-register.dto';
 
 @Injectable()
 export class AuthService {
@@ -143,6 +143,7 @@ export class AuthService {
 
   async upsertFromAuth0Profile(
     auth0User: any,
+    role: UserRole = UserRole.client,
   ): Promise<{ user: User; accessToken: string }> {
     const externalAuthId: string = auth0User?.sub ?? '';
     const email: string = auth0User?.email ?? '';
@@ -157,7 +158,7 @@ export class AuthService {
       email,
       name,
       imgProfile,
-      rol: UserRole.client, // Default to client
+      rol: role, // Usar el rol proporcionado
     };
 
     const user = await this.authRepository.upsertByExternalAuthId(
