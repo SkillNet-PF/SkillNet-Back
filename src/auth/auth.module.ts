@@ -11,6 +11,7 @@ import { User } from './entities/user.entity';
 import { Client } from 'src/clients/entities/client.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 import { AuthRepository } from './auth-repository';
+import { MailModule } from '../mail/mail.module'
 // OIDC guard moved to src/guards; no import/export here
 
 @Module({
@@ -27,6 +28,7 @@ import { AuthRepository } from './auth-repository';
       }),
     }),
     SupabaseModule,
+    MailModule,
   ],
   providers: [AuthService, JwtStrategy, AuthRepository],
   controllers: [AuthController],

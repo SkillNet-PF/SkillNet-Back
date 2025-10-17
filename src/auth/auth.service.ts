@@ -7,6 +7,7 @@ import { User } from './entities/user.entity';
 import { AuthRepository } from './auth-repository';
 import { SupabaseService } from './supabase/supabase.service';
 import { UserRole } from '../common/enums/user-role.enum';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -14,6 +15,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly authRepository: AuthRepository,
     private readonly supabase: SupabaseService,
+    private readonly mailService: MailService,
   ) {}
 
   async registerClient(
@@ -54,11 +56,21 @@ export class AuthService {
       );
     }
 
+
+
+
     const accessToken = await this.signJwt(createdClient);
 
     if (!accessToken) {
       throw new UnauthorizedException('Error generando token de acceso');
     }
+
+         //  Enviar correo de confirmación
+    await this.mailService.sendRegistrationEmail(
+      createdClient.email,
+      createdClient.name || 'Usuario',
+    ); 
+
 
     return {
       user: createdClient,
@@ -116,6 +128,11 @@ export class AuthService {
       throw new UnauthorizedException('Error generando token de acceso');
     }
 
+     //  Enviar correo de confirmación al proveedor
+    await this.mailService.sendRegistrationEmail(
+      createdProvider.email,
+      createdProvider.name || 'Proveedor',
+    );
     return { user: createdProvider, accessToken };
   }
 
