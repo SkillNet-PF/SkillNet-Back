@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
-import { UpdateAppointmentDto } from './dto/update-appointment.dto';
+// import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Appointment } from './entities/appointment.entity';
 import { Repository } from 'typeorm';
@@ -51,7 +51,7 @@ export class AppointmentsService {
       throw new BadRequestException(
         'Must be a client to create an appointment',
       );
-    // if (client.paymentStatus === false) throw new BadRequestException('you must pay your services to make an appointment')
+    if (client.paymentStatus === false) throw new BadRequestException('you must pay your services to make an appointment')
 
     if (client.servicesLeft === 0) throw new BadRequestException('there are no services left to make this appointment')
     
