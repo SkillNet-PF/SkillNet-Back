@@ -13,6 +13,7 @@ import { SubscriptionModule } from './subscription/subscription.module';
 import { CategoriesModule } from './categories/categories.module';
 import { SeedsModule } from './seeds/seeds.module';
 import { InitialDataSeed } from './seeds/seeds.service';
+import { SupabaseModule } from './auth/supabase/supabase.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { InitialDataSeed } from './seeds/seeds.service';
         } as any;
       },
     }),
+    SupabaseModule,
     AuthModule,
     AppointmentsModule,
     ClientsModule,
