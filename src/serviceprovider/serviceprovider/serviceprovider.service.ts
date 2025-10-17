@@ -89,4 +89,34 @@ async remove(id: string) {
       relations: ['category'], // trae categoría relacionada
     });
   }
+
+
+  async filterProviders(
+  name?: string,
+  category?: string,
+  day?: string,
+) {
+  const query = this.serviceprovider
+    .createQueryBuilder('provider')
+    .leftJoinAndSelect('provider.category', 'category')
+    .leftJoinAndSelect('provider.schedule', 'schedule');
+
+  // Filtrar por nombre
+  if (name) {
+    query.andWhere('provider.name ILIKE :name', { name: `%${name}%` });
+  }
+
+  // Filtrar por categoría
+  if (category) {
+    query.andWhere('category.name ILIKE :category', { category: `%${category}%` });
+  }
+
+  // Filtrar por día disponible
+  if (day) {
+    // Asumiendo que schedule.days es un string tipo "lunes,martes"
+    query.andWhere('schedule.days ILIKE :day', { day: `%${day}%` });
+  }
+
+  return await query.getMany();
+}
 }

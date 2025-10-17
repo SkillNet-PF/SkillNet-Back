@@ -16,6 +16,12 @@ export class Categories {
   })
   Name: string;
 
+  @Column({
+    type: 'boolean',
+    default: true,
+  })
+  isActive: boolean;
+
   @OneToMany(
     () => ServiceProvider,
     (serviceProvider) => serviceProvider.category,

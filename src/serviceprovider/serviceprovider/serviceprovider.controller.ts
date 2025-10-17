@@ -64,4 +64,20 @@ export class ServiceproviderController {
   remove(@Param('id') id: string) {
     return this.serviceproviderService.remove(id);
   }
+
+  @Get('providers')
+async getProviders(
+  @Query('name') name?: string,
+  @Query('category') category?: string,
+  @Query('day') day?: string,
+) {
+  return this.serviceproviderService.filterProviders(name, category, day);
+}
+// como usar :
+// /providers?name=Juan
+// /providers?category=Peluqueria
+// /providers?day=lunes
+// /providers?name=Juan&category=Peluqueria&day=lunes
+
+
 }

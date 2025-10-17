@@ -13,6 +13,7 @@ import { UserRole } from 'src/common/enums/user-role.enum';
 import { Client } from 'src/clients/entities/client.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 import { Categories } from '../categories/entities/categories.entity';
+import { Status } from './entities/status.enum';
 
 
 
@@ -25,11 +26,11 @@ export class AppointmentsService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
 
-    @InjectRepository(Client)
-    private readonly clientRepository: Repository<Client>,
+    // @InjectRepository(Client)
+    // private readonly clientRepository: Repository<Client>,
 
-    @InjectRepository(ServiceProvider)
-    private readonly providerRepository: Repository<ServiceProvider>,
+    // @InjectRepository(ServiceProvider)
+    // private readonly providerRepository: Repository<ServiceProvider>,
 
     @InjectRepository(Categories)
     private readonly categoryRepository: Repository<Categories>
@@ -37,61 +38,72 @@ export class AppointmentsService {
   ){}
 
   async createAppointment(createAppointmentDto: CreateAppointmentDto, user) {
-    const authUser = await this.clientRepository.findOneBy({
-      userId: user.userId,
+    const authUser = await this.userRepository.findOne({
+      where: { userId: user.userId,
+        rol: UserRole.client
+       },
     });
 
-    if (!authUser) throw new NotFoundException('user not found');
+    const client = authUser as Client
+    if (!client) throw new NotFoundException('user not found');
 
-    if (authUser.rol !== UserRole.client)
+    if (client.rol !== UserRole.client)
       throw new BadRequestException(
         'Must be a client to create an appointment',
       );
+    // if (client.paymentStatus === false) throw new BadRequestException('you must pay your services to make an appointment')
 
-    if (authUser.servicesLeft === 0) throw new BadRequestException('there are no services left to make this appointment')
+    if (client.servicesLeft === 0) throw new BadRequestException('there are no services left to make this appointment')
     
     const {category, appointmentDate, hour, notes, provider} = createAppointmentDto
 
     if (!category || !appointmentDate || !hour || !notes || !provider) throw new BadRequestException('all required fields must be complete')
-
-    //verifico que la fecha de emision sea posterior a la actual
+      
+      //verifico que la fecha de emision sea posterior a la actual
+      const appointmentDateType = new Date(appointmentDate);
     const today = new Date();
 
-    if (appointmentDate<= today) throw new BadRequestException('the appointment date must be later than the current date')
+    if (appointmentDateType<= today) throw new BadRequestException('the appointment date must be later than the current date')
 
 
     const categoryFound = await this.categoryRepository.findOneBy({Name: category})
-    const providerFound = await this.providerRepository.findOne({
-      where: {name: provider}, 
-      relations:{category: true, schedule:true}
+    const providerFound = await this.userRepository.findOne({
+      where: {name: provider, rol: UserRole.provider}, 
     })
 
-    if (!categoryFound) throw new NotFoundException('Category not found')
-    if (!providerFound) throw new NotFoundException('Provider not found')
+    const proveedor = providerFound as ServiceProvider 
 
-    if (providerFound.category !== categoryFound) throw new BadRequestException(`the provider does not have the category ${category}`)
+
+
+    if (!categoryFound) throw new NotFoundException('Category not found')
+    if (!proveedor) throw new NotFoundException('Provider not found')
+
+    if (proveedor.category !== categoryFound) throw new BadRequestException(`the provider does not have the category ${category}`)
    
     //convierto la fecha en un dia de la semana
-    const appointmentDay = appointmentDate.toLocaleDateString(
+    const appointmentDay = appointmentDateType.toLocaleDateString(
       'es-ES', 
       { weekday: 'long' });
     
-    if (!providerFound.dias.includes(appointmentDay)) {
+    if (!proveedor.dias.includes(appointmentDay)) {
     throw new BadRequestException(`El proveedor no trabaja los días ${appointmentDay}`);
     }
 
-    if (!providerFound.horarios.includes(hour)) {
+    if (!proveedor.horarios.includes(hour)) {
       throw new BadRequestException(`El proveedor no trabaja en el horario ${hour}`)
     }
       //verificar que el proveedor no tenga ordenes emitidas en esa fecha y horario
-    const providerId = providerFound.userId
+    const providerId = proveedor.userId
     
     const existingAppointment = await this.appointmentRepository
     .createQueryBuilder('appointment')
     .leftJoin('appointment.UserProvider', 'provider')
-    .where('provider.id = :providerId', { providerId })
-    .andWhere('appointment.AppointmentDate = :appointmentDate', { appointmentDate })
+    .where('provider.userId = :providerId', { providerId })
+    .andWhere('appointment.AppointmentDate = :appointmentDate')
     .andWhere('appointment.hour = :hour', { hour })
+    .andWhere('appointment.status = :status', { status: Status.CONFIRMED })
+    .andWhere('appointment.category = :category', { status: Status.PENDING })
+    .setParameter('appointmentDate', appointmentDateType)
     .getOne();
     
     if (existingAppointment) throw new BadRequestException(`The provider is unavailable on ${appointmentDate} at ${hour}`)
@@ -102,17 +114,19 @@ export class AppointmentsService {
 
     appointment.Category = categoryFound;
     appointment.CreationDate = today;
-    appointment.AppointmentDate = appointmentDate;
+    appointment.AppointmentDate = appointmentDateType;
     appointment.hour = hour;
     appointment.Notes = notes;
-    appointment.UserClient = authUser;
-    appointment.UserProvider = providerFound;
+    appointment.UserClient = client;
+    appointment.UserProvider = proveedor;
 
     await this.appointmentRepository.save(appointment);
 
     //restamos un servicio del usuario
 
-    await this.clientRepository.update({userId: authUser.userId}, {servicesLeft: authUser.servicesLeft-1})
+    client.servicesLeft = client.servicesLeft - 1
+
+    await this.userRepository.update({userId: client.userId}, client)
     
     return 'appointment succesfully saved'
     
@@ -173,14 +187,85 @@ export class AppointmentsService {
   }
 
   async findOne(id:string, user) {
+    //busco el usuario
+    const authUser = await this.userRepository.findOneBy({
+      userId: user.userId,
+    });
+
+    if (!authUser) throw new NotFoundException('user not found');
+
+    if (authUser.rol != user.rol) throw new BadRequestException('bad request');
+
+
+    const appointment = await this.appointmentRepository.findOne({
+      where: { AppointmentID: id },
+      relations: ['UserClient', 'UserProvider', 'Category'],
+    });
+    if (!appointment) throw new NotFoundException('appointment not found');
+
+    //verifico que el usuario sea el que creo el appointment o el proveedor
+    if(appointment.UserClient.userId !== user.userId && appointment.UserProvider.userId !== user.userId) throw new BadRequestException('bad request')
+    return appointment
+  }
+
+  
+  async update(id: string, status: string, user) {
+    //traigo el user
+    const authUser = await this.userRepository.findOneBy({
+      userId: user.userId,
+    });
+
+    if (!authUser) throw new NotFoundException('user not found');
+
+    //busco el appointment
+    const appointment = await this.appointmentRepository.findOne({
+      where: { AppointmentID: id },
+      relations: ['UserClient', 'UserProvider'],
+    });
+    if (!appointment) throw new NotFoundException('appointment not found');
+
+    //verifico que el usuario sea el que creo el appointment o el proveedor
+    if(appointment.UserClient.userId !== user.userId && appointment.UserProvider.userId !== user.userId) throw new BadRequestException('bad request')
+
+    //verifico que el status que se manda sea valido
+
+    if (status !== Status.CONFIRMED && status !== Status.CANCEL && status !== Status.COMPLETED_PARTIAL && status !== Status.COMPLETED) {
+      throw new BadRequestException('bad request');
+    }
     
-  }
+    //verifico que el status del appointment no sea canceled o completado
+    if (appointment.Status === Status.CANCEL || appointment.Status === Status.COMPLETED) throw new BadRequestException('chan not change the status of a canceled or completed appointment')
+    
+    //cancela el appointment para cliente o proveedor
+    if (status === Status.CANCEL){
+      appointment.Status = Status.CANCEL;
+      const userClient = await this.userRepository.findOneBy({userId: appointment.UserClient.userId})
+      const client = userClient as Client
 
-  update(id: number, updateAppointmentDto: UpdateAppointmentDto) {
-    return `This action updates a #${id} appointment`;
-  }
+      client.servicesLeft = client.servicesLeft + 1
+      await this.userRepository.update({userId: client.userId}, client)
+    };
 
-  remove(id: number) {
-    return `This action removes a #${id} appointment`;
+    //confirma el appointment solo para proveedor
+    if (appointment.Status === Status.PENDING && status === Status.CONFIRMED && authUser.rol === UserRole.provider) {
+      if (authUser.userId !== appointment.UserProvider.userId) throw new BadRequestException('Only the provider in the appointment can confirm it');
+      appointment.Status = Status.CONFIRMED;
+
+    }
+
+    if (status === Status.COMPLETED_PARTIAL && appointment.Status === Status.CONFIRMED) {
+      if(authUser.userId !== appointment.UserProvider.userId) throw new BadRequestException('wait until the provider confirm the completion of the appointment');
+      appointment.Status = Status.COMPLETED_PARTIAL;
+    }
+
+    if (status === Status.COMPLETED && appointment.Status === Status.COMPLETED_PARTIAL) {
+      if(authUser.userId !== appointment.UserClient.userId) throw new BadRequestException('Only the client can complete the appointment');
+      appointment.Status = Status.COMPLETED;
+    }
+
+    await this.appointmentRepository.update({ AppointmentID: id }, appointment);
+    return appointment;
   }
+    
+
 }

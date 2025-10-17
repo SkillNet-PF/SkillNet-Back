@@ -13,20 +13,22 @@ import {
 } from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
-import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { UserRole } from 'src/common/enums/user-role.enum';
+import { RolesGuard } from 'src/guards/roles.guard';
 
-@UseGuards(JwtAuthGuard)
+
 @Controller('appointments')
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
-  // @Roles()
-  // @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.client)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Post()
-  createAppointment(@Body() createAppointmentDto: CreateAppointmentDto) {
-    // Respuesta temporal para evitar 404 mientras se implementa lógica
-    return { ok: true, message: 'Appointment creation is under construction' };
+  createAppointment(@Body() createAppointmentDto: CreateAppointmentDto, @Req() request) {
+    const user = request.user;
+    return this.appointmentsService.createAppointment(createAppointmentDto, user);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -63,14 +65,11 @@ export class AppointmentsController {
   @Put(':id')
   update(
     @Param('id') id: string,
-    @Body() updateAppointmentDto: UpdateAppointmentDto,
+    @Body() status: string,
+    @Req() request
   ) {
-    return this.appointmentsService.update(+id, updateAppointmentDto);
+    const user = request.user;
+    return this.appointmentsService.update(id, status, user);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.appointmentsService.remove(+id);
-  }
 }
