@@ -99,7 +99,39 @@ export class AuthRepository {
   }
 
   async findById(id: string): Promise<User | null> {
-    return await this.userRepository.findOne({ where: { userId: id } });
+    // Primero intentar encontrar como usuario base
+    const user = await this.userRepository.findOne({ where: { userId: id } });
+
+    if (!user) {
+      return null;
+    }
+
+    // Si es un proveedor, obtener datos completos de la tabla ServiceProvider
+    if (user.rol === UserRole.provider) {
+      const provider = await this.providerRepository.findOne({
+        where: { userId: id },
+        relations: ['category'], // Incluir la categoría si existe
+      });
+
+      if (provider) {
+        // Retornar los datos combinados del proveedor
+        return provider;
+      }
+    }
+
+    // Si es un cliente, obtener datos completos de la tabla Client
+    if (user.rol === UserRole.client) {
+      const client = await this.clientRepository.findOne({
+        where: { userId: id },
+      });
+
+      if (client) {
+        return client;
+      }
+    }
+
+    // Si no se encuentra en las tablas específicas, retornar el usuario base
+    return user;
   }
 
   async update(id: string, userData: Partial<User>): Promise<User | null> {
