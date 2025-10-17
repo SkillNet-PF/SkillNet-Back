@@ -45,6 +45,10 @@ async function bootstrap() {
   } catch (error) {
     throw new Error(`⚠️ Error starting server: ${error}`);
   }
+
+  //TODO:LOG PARA DEBUG DE SUPABASE, VER SI LA URL ES LA CORRECTA
+  // console.log('CWD:', process.cwd());
+  // console.log('ENV URL at boot:', process.env.SUPABASE_URL);
 }
 
 bootstrap();
