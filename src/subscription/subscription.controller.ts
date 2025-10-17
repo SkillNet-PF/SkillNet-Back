@@ -19,7 +19,7 @@ export class SubscriptionController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.subscriptionService.findOne(+id);
+    return this.subscriptionService.findOne(id);
   }
 
   @Patch(':id')

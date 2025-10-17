@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/common';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,13 +14,18 @@ export class SubscriptionService {
   async create(createSubscriptionDto: CreateSubscriptionDto) {
     const {Name, Descption, monthlyServices, price} = createSubscriptionDto;
 
-    if (!Name || !Descption || !monthlyServices || !price) {
-      throw new Error('All fields are required');
-    }
+    if (!Name || !Descption || !monthlyServices || !price) throw new BadRequestException('All fields are required');
     
-    if (!Number(monthlyServices) || !Number(price)) {
-      throw new Error('monthlyServices and price must be numbers');
-    }
+
+    if (!Number(monthlyServices) || !Number(price)) throw new BadRequestException('monthlyServices and price must be numbers');
+    
+
+    if (Number(monthlyServices) <= 0 || Number(price) <= 0) throw new BadRequestException('monthlyServices and price must be greater than 0');
+  
+
+    const existingSubscription = await this.subscriptionsRepository.findOne({ where: { Name } });
+
+    if(existingSubscription) throw new BadRequestException('subscription already exists');
 
     const subscription = new subscriptions();
     subscription.Name = Name;
@@ -33,13 +38,19 @@ export class SubscriptionService {
     return subscription;
   }
 
-  findAll() {
-    return `This action returns all subscription`;
+  async findAll() {
+    const subscriptions = await this.subscriptionsRepository.find();
+    return subscriptions;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} subscription`;
-  }
+  async findOne(id: string) {
+    const subscription = await this.subscriptionsRepository.findOne({ 
+      where: { SuscriptionID: id },
+  });
+
+  if (!subscription) throw new BadGatewayException('subscription not found');
+
+  return subscription;}
 
   update(id: number, updateSubscriptionDto: UpdateSubscriptionDto) {
     return `This action updates a #${id} subscription`;
