@@ -24,11 +24,11 @@ export class SubscriptionController {
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateSubscriptionDto: UpdateSubscriptionDto) {
-    return this.subscriptionService.update(+id, updateSubscriptionDto);
+    return this.subscriptionService.update(id, updateSubscriptionDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.subscriptionService.remove(+id);
+    return this.subscriptionService.remove(id);
   }
 }

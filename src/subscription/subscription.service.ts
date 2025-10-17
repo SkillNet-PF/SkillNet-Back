@@ -39,7 +39,7 @@ export class SubscriptionService {
   }
 
   async findAll() {
-    const subscriptions = await this.subscriptionsRepository.find();
+    const subscriptions = await this.subscriptionsRepository.find({where:{isActive: true}});
     return subscriptions;
   }
 
@@ -52,11 +52,25 @@ export class SubscriptionService {
 
   return subscription;}
 
-  update(id: number, updateSubscriptionDto: UpdateSubscriptionDto) {
-    return `This action updates a #${id} subscription`;
+  async update(id: string, updateSubscriptionDto: UpdateSubscriptionDto) {
+    const subscription = await this.subscriptionsRepository.findOne({
+      
+    })
+    if (!subscription) throw new BadGatewayException('subscription not found');
+
+    const {Name, Descption, monthlyServices, price} = updateSubscriptionDto;
+
+    if (Name) subscription.Name = Name;
+    if (Descption) subscription.Descption = Descption;
+    if (monthlyServices) subscription.monthlyServices = Number(monthlyServices);
+    if (price) subscription.price = Number(price);
+
+    await this.subscriptionsRepository.save(subscription);
+    //faltan las validaciones de los datos mandados
+    return subscription;
   }
 
-  remove(id: number) {
+  remove(id: string) {
     return `This action removes a #${id} subscription`;
   }
 }
