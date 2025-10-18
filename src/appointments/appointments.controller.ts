@@ -18,7 +18,6 @@ import { Roles } from 'src/auth/roles.decorator';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { RolesGuard } from 'src/guards/roles.guard';
 
-
 @Controller('appointments')
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
@@ -71,5 +70,4 @@ export class AppointmentsController {
     const user = request.user;
     return this.appointmentsService.update(id, status, user);
   }
-
 }

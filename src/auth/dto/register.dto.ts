@@ -1,7 +1,6 @@
 import {
   IsBoolean,
   IsEmail,
-  IsEmpty,
   IsEnum,
   IsIn,
   IsNotEmpty,
@@ -52,4 +51,8 @@ export abstract class RegisterDto {
   @IsEnum(UserRole)
   @IsIn(['client', 'provider'])
   rol!: UserRole;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
