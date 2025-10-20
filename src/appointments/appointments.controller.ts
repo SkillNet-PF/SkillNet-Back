@@ -17,6 +17,7 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { RolesGuard } from 'src/guards/roles.guard';
+import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 
 
 @Controller('appointments')
@@ -65,9 +66,11 @@ export class AppointmentsController {
   @Put(':id')
   update(
     @Param('id') id: string,
-    @Body() status: string,
+    @Body() appointmentDto: UpdateAppointmentDto,
     @Req() request
   ) {
+    const status = appointmentDto.Status
+    console.log(status)
     const user = request.user;
     return this.appointmentsService.update(id, status, user);
   }

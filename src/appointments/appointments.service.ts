@@ -68,7 +68,8 @@ export class AppointmentsService {
 
     const categoryFound = await this.categoryRepository.findOneBy({Name: category})
     const providerFound = await this.userRepository.findOne({
-      where: {name: provider, rol: UserRole.provider}, 
+      where: {name: provider, rol: UserRole.provider},
+      relations: ['category', 'schedule'] 
     })
 
     const proveedor = providerFound as ServiceProvider 
@@ -78,7 +79,8 @@ export class AppointmentsService {
     if (!categoryFound) throw new NotFoundException('Category not found')
     if (!proveedor) throw new NotFoundException('Provider not found')
 
-    if (proveedor.category !== categoryFound) throw new BadRequestException(`the provider does not have the category ${category}`)
+
+    if (proveedor.category.CategoryID !== categoryFound.CategoryID) throw new BadRequestException(`the provider does not have the category ${category}`)
    
     //convierto la fecha en un dia de la semana
     const appointmentDay = appointmentDateType.toLocaleDateString(
@@ -101,8 +103,8 @@ export class AppointmentsService {
     .where('provider.userId = :providerId', { providerId })
     .andWhere('appointment.AppointmentDate = :appointmentDate')
     .andWhere('appointment.hour = :hour', { hour })
-    .andWhere('appointment.status = :status', { status: Status.CONFIRMED })
-    .andWhere('appointment.category = :category', { status: Status.PENDING })
+    .andWhere('appointment.Status = :status', { status: Status.CONFIRMED })
+    .andWhere('appointment.Status = :status', { status: Status.PENDING })
     .setParameter('appointmentDate', appointmentDateType)
     .getOne();
     
@@ -148,12 +150,12 @@ export class AppointmentsService {
 
     if (authUser.rol != user.rol) throw new BadRequestException('bad request');
 
-    
+    console.log(filters)
     const query = this.appointmentRepository
       .createQueryBuilder('appointment')
-      .leftJoinAndSelect('appointment.provider', 'provider')
+      .leftJoinAndSelect('appointment.UserProvider', 'provider')
       .leftJoinAndSelect('appointment.UserClient', 'client')
-      .leftJoinAndSelect('appointment.category', 'category')
+      .leftJoinAndSelect('appointment.Category', 'category')
       
       
      if (authUser.rol === UserRole.client) {
@@ -161,22 +163,22 @@ export class AppointmentsService {
     } else if (authUser.rol === UserRole.provider) {
       query.where('provider.userId = :userId', { userId: user.userId });
     }
-     if (filters.status) {
-        query.andWhere('appointment.status = :status', { status: filters.status });
+    if (filters.status) {
+        query.andWhere('appointment.Status = :status', { status: filters.status });
       }
 
-      if (filters.category) {
+    if (filters.category) {
         query.andWhere('category.Name = :category', { category: filters.category });
      }
 
-      if (filters.providerId) {
+    if (filters.providerId) {
         
-       query.andWhere('provider.name = :provider', { provider:  filters.provider });
+       query.andWhere('provider.Name = :provider', { provider:  filters.provider });
      }
     
-      query.orderBy('appointment.AppointmentDate', 'DESC');
+    query.orderBy('appointment.AppointmentDate', 'DESC');
 
-  const appointments: Appointment[]= await query.getMany()
+    const appointments: Appointment[]= await query.getMany()
 
     //paginar
     const start = (page - 1) * limit;
@@ -226,13 +228,14 @@ export class AppointmentsService {
 
     //verifico que el usuario sea el que creo el appointment o el proveedor
     if(appointment.UserClient.userId !== user.userId && appointment.UserProvider.userId !== user.userId) throw new BadRequestException('bad request')
+    
 
     //verifico que el status que se manda sea valido
 
     if (status !== Status.CONFIRMED && status !== Status.CANCEL && status !== Status.COMPLETED_PARTIAL && status !== Status.COMPLETED) {
       throw new BadRequestException('bad request');
     }
-    
+    console.log(status)
     //verifico que el status del appointment no sea canceled o completado
     if (appointment.Status === Status.CANCEL || appointment.Status === Status.COMPLETED) throw new BadRequestException('chan not change the status of a canceled or completed appointment')
     
