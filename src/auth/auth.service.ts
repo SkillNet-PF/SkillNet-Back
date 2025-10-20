@@ -8,6 +8,9 @@ import { SupabaseService } from './supabase/supabase.service';
 import { UserRole } from '../common/enums/user-role.enum';
 import { ProviderRegisterDto } from './dto/provider-register.dto';
 import { MailService } from '../mail/mail.service';
+import { In, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Categories } from 'src/categories/entities/categories.entity';
 
 @Injectable()
 export class AuthService {
@@ -16,6 +19,8 @@ export class AuthService {
     private readonly authRepository: AuthRepository,
     private readonly supabase: SupabaseService,
     private readonly mailService: MailService,
+   @InjectRepository(Categories)
+       private readonly categoryRepository: Repository<Categories>,
   ) {}
 
   async registerClient(
@@ -77,7 +82,7 @@ export class AuthService {
   async registerProvider(
     payload: ProviderRegisterDto,
   ): Promise<{ user: User; accessToken: string }> {
-    const { email, password, serviceType, about, days, horarios } = payload;
+    const { email, password, category, about, days, horarios } = payload;
 
     // Crear usuario en Supabase Auth
     const { data, error } = await this.supabase.signUpWithEmail(
@@ -96,6 +101,10 @@ export class AuthService {
       throw new UnauthorizedException('Error obteniendo ID de autenticación');
     }
 
+    const categoryFound = await this.categoryRepository.findOneBy({Name: category})
+
+    if (!categoryFound) throw new UnauthorizedException('Category not found');
+
     // Preparar datos específicos para proveedor con mapeo de campos
     const providerData = {
       ...payload,
@@ -103,10 +112,12 @@ export class AuthService {
       rol: UserRole.provider,
       isActive: true, // Establecer como activo por defecto
       // Mapear campos específicos del proveedor
+
+      //si los horarios y dias los traemos del front con un checkbox ¿como llega al back?
       bio: about, // about -> bio en la entidad
-      dias: days?.split(',').map((s) => s.trim()), // string CSV -> array
-      horarios: horarios?.split(',').map((s) => s.trim()), // string CSV -> array
-      serviceType: serviceType,
+      dias: days.split(',').map((s) => s.trim()), // string CSV -> array
+      horarios: horarios.split(',').map((s) => s.trim()), // string CSV -> array
+      category: categoryFound,
     };
 
     const createdProvider =
