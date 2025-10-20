@@ -77,29 +77,34 @@ export class AuthRepository {
   ): Promise<User> {
     const existing = await this.findByExternalAuthId(externalAuthId);
     if (existing) {
-      // Para updates, usar el repositorio correcto según el rol existente
       switch (existing.rol) {
-        case UserRole.client:
+        case UserRole.client: {
           const mergedClient = this.clientRepository.merge(
             existing as Client,
             userData,
           );
           return await this.clientRepository.save(mergedClient);
-        case UserRole.provider:
+        }
+        case UserRole.provider: {
           const mergedProvider = this.providerRepository.merge(
             existing as ServiceProvider,
             userData,
           );
           return await this.providerRepository.save(mergedProvider);
-        default:
+        }
+        default: {
           const merged = this.userRepository.merge(existing, userData);
           return await this.userRepository.save(merged);
+        }
       }
     }
-    // Si no existe, crear nuevo usando métodos específicos según rol
+
+    // Nuevo: crear según el rol que llega en userData (si no, cliente por defecto)
     const dataWithAuth = { ...userData, externalAuthId };
 
-    // Para Auth0, por defecto crear como cliente (puede ajustarse según lógica de negocio)
+    if (userData.rol === UserRole.provider) {
+      return await this.createProvider(dataWithAuth);
+    }
     return await this.createClient(dataWithAuth);
   }
 
