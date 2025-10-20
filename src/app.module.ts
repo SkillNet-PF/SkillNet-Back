@@ -14,6 +14,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { SeedsModule } from './seeds/seeds.module';
 import { InitialDataSeed } from './seeds/seeds.service';
 import { SupabaseModule } from './auth/supabase/supabase.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { SupabaseModule } from './auth/supabase/supabase.module';
     SubscriptionModule,
     CategoriesModule,
     SeedsModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],
