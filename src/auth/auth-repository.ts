@@ -6,6 +6,7 @@ import { Client } from 'src/clients/entities/client.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { RegisterClientDto } from './dto/register-client.dto';
+import { Categories } from 'src/categories/entities/categories.entity';
 
 @Injectable()
 export class AuthRepository {
@@ -16,6 +17,8 @@ export class AuthRepository {
     private readonly clientRepository: Repository<Client>,
     @InjectRepository(ServiceProvider)
     private readonly providerRepository: Repository<ServiceProvider>,
+    @InjectRepository(Categories)
+    private readonly categoryRepository: Repository<Categories>,
   ) {}
 
   async createClient(
@@ -38,10 +41,12 @@ export class AuthRepository {
     const enhancedClientData = {
       ...clientData,
       rol: UserRole.client, // Forzar rol de cliente
+      //se saca cuando terminemos de preparar la base de datos, el plan contratado se define luego de crear el usuario
       servicesLeft: getServicesByPlan(clientData.subscription as string),
       startDate: new Date(),
       endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días
-      paymentStatus: false,
+      paymentStatus: true,
+      ////////////////////////////////////////////////////////////////////////
     };
 
     const client = this.clientRepository.create(enhancedClientData);
