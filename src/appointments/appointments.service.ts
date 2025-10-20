@@ -14,7 +14,7 @@ import { Client } from 'src/clients/entities/client.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 import { Categories } from '../categories/entities/categories.entity';
 import { Status } from './entities/status.enum';
-
+import { MailService } from 'src/mail/mail.service'
 
 
 @Injectable()
@@ -33,7 +33,8 @@ export class AppointmentsService {
     // private readonly providerRepository: Repository<ServiceProvider>,
 
     @InjectRepository(Categories)
-    private readonly categoryRepository: Repository<Categories>
+    private readonly categoryRepository: Repository<Categories>,
+    private readonly mailService: MailService,
     
   ){}
 
@@ -129,6 +130,18 @@ export class AppointmentsService {
     client.servicesLeft = client.servicesLeft - 1
 
     await this.userRepository.update({userId: client.userId}, client)
+
+    try {
+    await this.mailService.sendAppointmentConfirmation(
+      client.email,        
+      client.name,         
+      appointmentDate,     
+      hour,                
+      proveedor.name,      
+    );
+  } catch (err) {
+    console.error('⚠️ No se pudo enviar el correo de turno:', err);
+  }
     
     return 'appointment succesfully saved'
     
