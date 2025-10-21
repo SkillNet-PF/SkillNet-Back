@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import { Client } from 'src/clients/entities/client.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 import { Categories } from '../categories/entities/categories.entity';
 import { Status } from './entities/status.enum';
+import { ActivityLogService } from 'src/admin/activityLog.service';
 
 
 
@@ -29,23 +31,27 @@ export class AppointmentsService {
     // @InjectRepository(Client)
     // private readonly clientRepository: Repository<Client>,
 
-    // @InjectRepository(ServiceProvider)
-    // private readonly providerRepository: Repository<ServiceProvider>,
+    @InjectRepository(ServiceProvider)
+    private readonly providerRepository: Repository<ServiceProvider>,
 
     @InjectRepository(Categories)
-    private readonly categoryRepository: Repository<Categories>
+    private readonly categoryRepository: Repository<Categories>,
+
+    private readonly activityLogService: ActivityLogService,
+
+    
     
   ){}
 
   async createAppointment(createAppointmentDto: CreateAppointmentDto, user) {
     const authUser = await this.userRepository.findOne({
       where: { userId: user.userId,
-        rol: UserRole.client
        },
     });
 
+    if (!authUser) throw new NotFoundException('user not found');
+
     const client = authUser as Client
-    if (!client) throw new NotFoundException('user not found');
 
     if (client.rol !== UserRole.client)
       throw new BadRequestException(
@@ -60,42 +66,45 @@ export class AppointmentsService {
     if (!category || !appointmentDate || !hour || !notes || !provider) throw new BadRequestException('all required fields must be complete')
       
       //verifico que la fecha de emision sea posterior a la actual
-      const appointmentDateType = new Date(appointmentDate);
+    const appointmentDateType = new Date(`${appointmentDate}T00:00:00Z`);
+    appointmentDateType.setMinutes(
+        appointmentDateType.getMinutes() + appointmentDateType.getTimezoneOffset()
+    );
     const today = new Date();
 
     if (appointmentDateType<= today) throw new BadRequestException('the appointment date must be later than the current date')
 
 
     const categoryFound = await this.categoryRepository.findOneBy({Name: category})
-    const providerFound = await this.userRepository.findOne({
+    const providerFound = await this.providerRepository.findOne({
       where: {name: provider, rol: UserRole.provider},
-      relations: ['category', 'schedule'] 
+      relations:['category','schedule']
     })
 
-    const proveedor = providerFound as ServiceProvider 
+  
 
 
 
     if (!categoryFound) throw new NotFoundException('Category not found')
-    if (!proveedor) throw new NotFoundException('Provider not found')
+    if (!providerFound) throw new NotFoundException('Provider not found')
 
 
-    if (proveedor.category.CategoryID !== categoryFound.CategoryID) throw new BadRequestException(`the provider does not have the category ${category}`)
+    if (providerFound.category.CategoryID !== categoryFound.CategoryID) throw new BadRequestException(`the provider does not have the category ${category}`)
    
     //convierto la fecha en un dia de la semana
     const appointmentDay = appointmentDateType.toLocaleDateString(
       'es-ES', 
       { weekday: 'long' });
     
-    if (!proveedor.dias.includes(appointmentDay)) {
+    if (!providerFound.dias.includes(appointmentDay)) {
     throw new BadRequestException(`El proveedor no trabaja los días ${appointmentDay}`);
     }
 
-    if (!proveedor.horarios.includes(hour)) {
+    if (!providerFound.horarios.includes(hour)) {
       throw new BadRequestException(`El proveedor no trabaja en el horario ${hour}`)
     }
       //verificar que el proveedor no tenga ordenes emitidas en esa fecha y horario
-    const providerId = proveedor.userId
+    const providerId = providerFound.userId
     
     const existingAppointment = await this.appointmentRepository
     .createQueryBuilder('appointment')
@@ -120,7 +129,7 @@ export class AppointmentsService {
     appointment.hour = hour;
     appointment.Notes = notes;
     appointment.UserClient = client;
-    appointment.UserProvider = proveedor;
+    appointment.UserProvider = providerFound;
 
     await this.appointmentRepository.save(appointment);
 
@@ -129,6 +138,9 @@ export class AppointmentsService {
     client.servicesLeft = client.servicesLeft - 1
 
     await this.userRepository.update({userId: client.userId}, client)
+
+    //creamos el log
+    await this.activityLogService.create(authUser, 'Agendó un turno')
     
     return 'appointment succesfully saved'
     
@@ -180,12 +192,12 @@ export class AppointmentsService {
 
     const appointments: Appointment[]= await query.getMany()
 
-    //paginar
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    const appointmentsPage = appointments.slice(start, end);
+    // //paginar
+    // const start = (page - 1) * limit;
+    // const end = start + limit;
+    // const appointmentsPage = appointments.slice(start, end);
 
-    return appointmentsPage;
+    return appointments;
   }
 
   async findOne(id:string, user) {
@@ -235,7 +247,6 @@ export class AppointmentsService {
     if (status !== Status.CONFIRMED && status !== Status.CANCEL && status !== Status.COMPLETED_PARTIAL && status !== Status.COMPLETED) {
       throw new BadRequestException('bad request');
     }
-    console.log(status)
     //verifico que el status del appointment no sea canceled o completado
     if (appointment.Status === Status.CANCEL || appointment.Status === Status.COMPLETED) throw new BadRequestException('chan not change the status of a canceled or completed appointment')
     
@@ -247,12 +258,14 @@ export class AppointmentsService {
 
       client.servicesLeft = client.servicesLeft + 1
       await this.userRepository.update({userId: client.userId}, client)
+      await this.activityLogService.create(authUser, 'Cancelo un turno')
     };
 
     //confirma el appointment solo para proveedor
     if (appointment.Status === Status.PENDING && status === Status.CONFIRMED && authUser.rol === UserRole.provider) {
       if (authUser.userId !== appointment.UserProvider.userId) throw new BadRequestException('Only the provider in the appointment can confirm it');
       appointment.Status = Status.CONFIRMED;
+      await this.activityLogService.create(authUser, 'Confirmo un turno')
 
     }
 
@@ -264,6 +277,7 @@ export class AppointmentsService {
     if (status === Status.COMPLETED && appointment.Status === Status.COMPLETED_PARTIAL) {
       if(authUser.userId !== appointment.UserClient.userId) throw new BadRequestException('Only the client can complete the appointment');
       appointment.Status = Status.COMPLETED;
+      await this.activityLogService.create(authUser, 'Completo un turno')
     }
 
     await this.appointmentRepository.update({ AppointmentID: id }, appointment);

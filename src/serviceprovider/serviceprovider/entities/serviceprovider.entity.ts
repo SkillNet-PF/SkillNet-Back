@@ -1,16 +1,10 @@
 import { Appointment } from 'src/appointments/entities/appointment.entity';
 import { Categories } from 'src/categories/entities/categories.entity';
 import { User } from 'src/auth/entities/user.entity';
-import { Column, ManyToOne, JoinColumn, ChildEntity } from 'typeorm';
-
-// ===== CÓDIGO ORIGINAL (COMENTADO PARA ROLLBACK) =====
-// @ChildEntity('providers')
-// ===== FIN CÓDIGO ORIGINAL =====
-
+import { Column, ManyToOne, JoinColumn, ChildEntity, OneToMany } from 'typeorm';
 
 @ChildEntity('provider')
 export class ServiceProvider extends User {
-
   @Column('text', { nullable: true })
   bio: string;
 
@@ -24,7 +18,7 @@ export class ServiceProvider extends User {
   @JoinColumn({ name: 'categoryId' })
   category: Categories;
 
-  @ManyToOne(() => Appointment, (schedule) => schedule.UserProvider, {
+  @OneToMany(() => Appointment, (schedule) => schedule.UserProvider, {
     nullable: true,
   })
   @JoinColumn({ name: 'scheduleId' })

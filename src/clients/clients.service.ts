@@ -7,7 +7,6 @@ import {
 import { UpdateClientDto } from './dto/update-client.dto';
 import { ClientsRepository } from './clients.repository';
 import { ClientFilters } from './interfaces/client-filter';
-import { Not } from 'typeorm';
 import { AuthenticatedClient } from './interfaces/authenticated-client';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
@@ -29,7 +28,7 @@ export class ClientsService {
 
   async getAllClients(page: number, limit: number, filters?: ClientFilters) {
     const validPage = Math.max(1, page);
-    const validLimit = Math.min(Math.max(1, limit), 100); //
+    const validLimit = Math.min(Math.max(1, limit), 100);
 
     const result = await this.clientsRepository.getAllClients(
       validPage,
@@ -48,9 +47,9 @@ export class ClientsService {
   }
 
   async getClientProfile(id: string, user?: AuthenticatedClient) {
-    if (user && user.rol === UserRole.client && user.userId !== id)
+    if (user && user.rol === UserRole.client && user.userId !== id) {
       throw new ForbiddenException('No se puede acceder a este perfil');
-
+    }
     return this.clientsRepository.getClientProfile(id);
   }
 
@@ -77,7 +76,6 @@ export class ClientsService {
         throw new NotFoundException('Cliente no encontrado');
       }
 
-      // Narrowing: asegurar email antes de usarlo
       const email = clientData.email;
       if (!email) {
         throw new BadRequestException('El cliente no tiene email registrado.');
@@ -93,17 +91,17 @@ export class ClientsService {
 
       await this.updatePasswordInSupabase(updateClientDto.newPassword);
 
-      // Limpiar campos de contraseña antes de persistir el perfil
+      // Limpiar campos sensibles antes de persistir cambios de perfil
       const { currentPassword, newPassword, ...rest } = updateClientDto;
       updateClientDto = rest as UpdateClientDto;
     }
 
-    // Persistir solo datos de perfil en PostgreSQL
+    // Actualizar solo datos de perfil en PostgreSQL
     return this.clientsRepository.updateClientProfile(id, updateClientDto);
   }
 
   async deleteClientProfile(id: string, user?: AuthenticatedClient) {
-    // Verificar permisos: el cliente puede eliminar su propio perfil o un admin puede eliminar cualquier perfil
+    // El cliente puede eliminar su propio perfil; un admin puede eliminar cualquiera
     if (user) {
       const isOwner = user.userId === id;
       const isAdmin = user.rol === UserRole.admin;
@@ -114,7 +112,6 @@ export class ClientsService {
         );
       }
     }
-
     return this.clientsRepository.deleteClientProfile(id);
   }
 
