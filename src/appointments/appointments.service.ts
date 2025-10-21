@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import { Client } from 'src/clients/entities/client.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 import { Categories } from '../categories/entities/categories.entity';
 import { Status } from './entities/status.enum';
+import { ActivityLogService } from 'src/admin/activityLog.service';
 
 
 
@@ -33,19 +35,23 @@ export class AppointmentsService {
     // private readonly providerRepository: Repository<ServiceProvider>,
 
     @InjectRepository(Categories)
-    private readonly categoryRepository: Repository<Categories>
+    private readonly categoryRepository: Repository<Categories>,
+
+    private readonly activityLogService: ActivityLogService,
+
+    
     
   ){}
 
   async createAppointment(createAppointmentDto: CreateAppointmentDto, user) {
     const authUser = await this.userRepository.findOne({
       where: { userId: user.userId,
-        rol: UserRole.client
        },
     });
 
+    if (!authUser) throw new NotFoundException('user not found');
+
     const client = authUser as Client
-    if (!client) throw new NotFoundException('user not found');
 
     if (client.rol !== UserRole.client)
       throw new BadRequestException(
@@ -129,6 +135,9 @@ export class AppointmentsService {
     client.servicesLeft = client.servicesLeft - 1
 
     await this.userRepository.update({userId: client.userId}, client)
+
+    //creamos el log
+    await this.activityLogService.create(authUser, 'Agendó un turno')
     
     return 'appointment succesfully saved'
     
@@ -180,12 +189,12 @@ export class AppointmentsService {
 
     const appointments: Appointment[]= await query.getMany()
 
-    //paginar
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    const appointmentsPage = appointments.slice(start, end);
+    // //paginar
+    // const start = (page - 1) * limit;
+    // const end = start + limit;
+    // const appointmentsPage = appointments.slice(start, end);
 
-    return appointmentsPage;
+    return appointments;
   }
 
   async findOne(id:string, user) {
@@ -235,7 +244,6 @@ export class AppointmentsService {
     if (status !== Status.CONFIRMED && status !== Status.CANCEL && status !== Status.COMPLETED_PARTIAL && status !== Status.COMPLETED) {
       throw new BadRequestException('bad request');
     }
-    console.log(status)
     //verifico que el status del appointment no sea canceled o completado
     if (appointment.Status === Status.CANCEL || appointment.Status === Status.COMPLETED) throw new BadRequestException('chan not change the status of a canceled or completed appointment')
     
@@ -247,12 +255,14 @@ export class AppointmentsService {
 
       client.servicesLeft = client.servicesLeft + 1
       await this.userRepository.update({userId: client.userId}, client)
+      await this.activityLogService.create(authUser, 'Cancelo un turno')
     };
 
     //confirma el appointment solo para proveedor
     if (appointment.Status === Status.PENDING && status === Status.CONFIRMED && authUser.rol === UserRole.provider) {
       if (authUser.userId !== appointment.UserProvider.userId) throw new BadRequestException('Only the provider in the appointment can confirm it');
       appointment.Status = Status.CONFIRMED;
+      await this.activityLogService.create(authUser, 'Confirmo un turno')
 
     }
 
@@ -264,6 +274,7 @@ export class AppointmentsService {
     if (status === Status.COMPLETED && appointment.Status === Status.COMPLETED_PARTIAL) {
       if(authUser.userId !== appointment.UserClient.userId) throw new BadRequestException('Only the client can complete the appointment');
       appointment.Status = Status.COMPLETED;
+      await this.activityLogService.create(authUser, 'Completo un turno')
     }
 
     await this.appointmentRepository.update({ AppointmentID: id }, appointment);

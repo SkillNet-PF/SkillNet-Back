@@ -11,6 +11,7 @@ import { MailService } from '../mail/mail.service';
 import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Categories } from 'src/categories/entities/categories.entity';
+import { ActivityLogService } from 'src/admin/activityLog.service';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,7 @@ export class AuthService {
     private readonly authRepository: AuthRepository,
     private readonly supabase: SupabaseService,
     private readonly mailService: MailService,
+    private readonly ActivityLogService: ActivityLogService,
    @InjectRepository(Categories)
        private readonly categoryRepository: Repository<Categories>,
   ) {}
@@ -73,6 +75,7 @@ export class AuthService {
       createdClient.name || 'Usuario',
     );
 
+    await this.ActivityLogService.create(createdClient, 'Creo una cuenta de cliente');
     return {
       user: createdClient,
       accessToken,
@@ -140,6 +143,7 @@ export class AuthService {
       createdProvider.email,
       createdProvider.name || 'Proveedor',
     );
+    await this.ActivityLogService.create(createdProvider, 'Creo una cuenta de proveedor');
     return { user: createdProvider, accessToken };
   }
 

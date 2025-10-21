@@ -4,9 +4,12 @@ import {
   Column,
   OneToOne,
   TableInheritance,
+  OneToMany,
+  JoinColumn,
 } from 'typeorm';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { v4 as uuid } from 'uuid';
+import { ActivityLog } from 'src/admin/entity/activityLog.entity';
 
 // ===== CONFIGURACIÓN ORIGINAL (COMENTADA PARA ROLLBACK) =====
 // @TableInheritance({ column: { type: 'enum', name: 'rol' } })
@@ -50,6 +53,12 @@ export abstract class User {
   })
   rol!: UserRole;
 
+  @OneToMany(()=>ActivityLog, (ActivityLog) => ActivityLog.user)
+  @JoinColumn({ name: 'activityLogs' })
+  activityLogs: ActivityLog[];
+
+
   @Column({ default: true })
   isActive!: boolean;
+
 }
