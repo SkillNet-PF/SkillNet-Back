@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Appointment } from 'src/appointments/entities/appointment.entity';
+import { Status } from 'src/appointments/entities/status.enum';
 import { User } from 'src/auth/entities/user.entity';
 import { Client } from 'src/clients/entities/client.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
@@ -37,12 +38,19 @@ export class AdminService {
       
     });
     const totalAppointments = await this.appointmentRepository.count();
-    
+    const pendingAppointment = await this.appointmentRepository.count({where: {Status: Status.PENDING}});
+    const confirmedAppointment = await this.appointmentRepository.count({where: {Status: Status.CONFIRMED}});
+    const completedAppointment = await this.appointmentRepository.count({where: {Status: Status.COMPLETED && Status.COMPLETED_PARTIAL}});
+    const canceledAppointment = await this.appointmentRepository.count({where: {Status: Status.CANCEL}});
     return ({
       totalClients,
       totalProviders,
       ingresos,
-      totalAppointments
+      totalAppointments,
+      pendingAppointment,
+      confirmedAppointment,
+      completedAppointment,
+      canceledAppointment
     })
   }
 }

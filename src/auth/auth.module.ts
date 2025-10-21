@@ -13,6 +13,8 @@ import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/se
 import { AuthRepository } from './auth-repository';
 import { MailModule } from '../mail/mail.module'
 import { Categories } from 'src/categories/entities/categories.entity';
+import { AdminModule } from 'src/admin/admin.module';
+
 // OIDC guard moved to src/guards; no import/export here
 
 @Module({
@@ -30,6 +32,8 @@ import { Categories } from 'src/categories/entities/categories.entity';
     }),
     SupabaseModule,
     MailModule,
+    AdminModule,
+    
   ],
   providers: [AuthService, JwtStrategy, AuthRepository],
   controllers: [AuthController],
