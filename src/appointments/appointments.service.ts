@@ -31,8 +31,8 @@ export class AppointmentsService {
     // @InjectRepository(Client)
     // private readonly clientRepository: Repository<Client>,
 
-    // @InjectRepository(ServiceProvider)
-    // private readonly providerRepository: Repository<ServiceProvider>,
+    @InjectRepository(ServiceProvider)
+    private readonly providerRepository: Repository<ServiceProvider>,
 
     @InjectRepository(Categories)
     private readonly categoryRepository: Repository<Categories>,
@@ -66,42 +66,45 @@ export class AppointmentsService {
     if (!category || !appointmentDate || !hour || !notes || !provider) throw new BadRequestException('all required fields must be complete')
       
       //verifico que la fecha de emision sea posterior a la actual
-      const appointmentDateType = new Date(appointmentDate);
+    const appointmentDateType = new Date(`${appointmentDate}T00:00:00Z`);
+    appointmentDateType.setMinutes(
+        appointmentDateType.getMinutes() + appointmentDateType.getTimezoneOffset()
+    );
     const today = new Date();
 
     if (appointmentDateType<= today) throw new BadRequestException('the appointment date must be later than the current date')
 
 
     const categoryFound = await this.categoryRepository.findOneBy({Name: category})
-    const providerFound = await this.userRepository.findOne({
+    const providerFound = await this.providerRepository.findOne({
       where: {name: provider, rol: UserRole.provider},
-      relations: ['category', 'schedule'] 
+      relations:['category','schedule']
     })
 
-    const proveedor = providerFound as ServiceProvider 
+  
 
 
 
     if (!categoryFound) throw new NotFoundException('Category not found')
-    if (!proveedor) throw new NotFoundException('Provider not found')
+    if (!providerFound) throw new NotFoundException('Provider not found')
 
 
-    if (proveedor.category.CategoryID !== categoryFound.CategoryID) throw new BadRequestException(`the provider does not have the category ${category}`)
+    if (providerFound.category.CategoryID !== categoryFound.CategoryID) throw new BadRequestException(`the provider does not have the category ${category}`)
    
     //convierto la fecha en un dia de la semana
     const appointmentDay = appointmentDateType.toLocaleDateString(
       'es-ES', 
       { weekday: 'long' });
     
-    if (!proveedor.dias.includes(appointmentDay)) {
+    if (!providerFound.dias.includes(appointmentDay)) {
     throw new BadRequestException(`El proveedor no trabaja los días ${appointmentDay}`);
     }
 
-    if (!proveedor.horarios.includes(hour)) {
+    if (!providerFound.horarios.includes(hour)) {
       throw new BadRequestException(`El proveedor no trabaja en el horario ${hour}`)
     }
       //verificar que el proveedor no tenga ordenes emitidas en esa fecha y horario
-    const providerId = proveedor.userId
+    const providerId = providerFound.userId
     
     const existingAppointment = await this.appointmentRepository
     .createQueryBuilder('appointment')
@@ -126,7 +129,7 @@ export class AppointmentsService {
     appointment.hour = hour;
     appointment.Notes = notes;
     appointment.UserClient = client;
-    appointment.UserProvider = proveedor;
+    appointment.UserProvider = providerFound;
 
     await this.appointmentRepository.save(appointment);
 

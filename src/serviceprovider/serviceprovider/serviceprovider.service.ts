@@ -1,16 +1,22 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UseGuards } from '@nestjs/common';
 import { CreateServiceproviderDto } from './dto/create-serviceprovider.dto';
 import { UpdateServiceproviderDto } from './dto/update-serviceprovider.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ServiceProvider } from './entities/serviceprovider.entity';
 import { Repository ,Like} from 'typeorm';
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { Appointment } from 'src/appointments/entities/appointment.entity';
+import { Status } from 'src/appointments/entities/status.enum';
+
 
 @Injectable()
 export class ServiceproviderService {
 
   constructor(@InjectRepository(ServiceProvider)
     private readonly serviceprovider:Repository<ServiceProvider>,
+
+    @InjectRepository(Appointment)
+    private readonly appointmentRepository: Repository<Appointment>,
   ){}
 async create(createServiceProviderDto: CreateServiceproviderDto) {
   
@@ -47,6 +53,29 @@ async create(createServiceProviderDto: CreateServiceproviderDto) {
   
 
 
+  async dashboard(user){
+    const provider = await this.serviceprovider.findOne({
+      where: { userId: user.userId},
+      relations:['category','schedule']
+    });
+
+    if (!provider) {
+      throw new NotFoundException(`Service provider not found`);
+    }
+    if (provider.rol != UserRole.provider) throw new BadRequestException('bad request');
+
+
+    const confirmedAppointments = await this.appointmentRepository.count({
+      where: { UserProvider: { userId: provider.userId }, Status: Status.CONFIRMED },
+    });
+
+    const pendingAppointments = await this.appointmentRepository.count({
+      where: { UserProvider: { userId: provider.userId }, Status: Status.PENDING },
+    });
+
+
+    return { provider,confirmedAppointments, pendingAppointments };
+  }
   async update(id: string, updateServiceproviderDto: UpdateServiceproviderDto) {
   const provider = await this.serviceprovider.findOne({ where: { userId: id } });
 
