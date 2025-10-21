@@ -11,13 +11,14 @@ import { User } from './entities/user.entity';
 import { Client } from 'src/clients/entities/client.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 import { AuthRepository } from './auth-repository';
+import { Categories } from 'src/categories/entities/categories.entity';
 import { MailModule } from '../mail/mail.module'
 // OIDC guard moved to src/guards; no import/export here
 
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([User, Client, ServiceProvider]),
+    TypeOrmModule.forFeature([User, Client, ServiceProvider, Categories]),
     PassportModule,
     JwtModule.registerAsync({
       global: true,

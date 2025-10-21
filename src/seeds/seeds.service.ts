@@ -38,6 +38,12 @@ export class InitialDataSeed {
     console.log('✅ Categorías sembradas correctamente');
   }
 
+  // Reseed categories: clears table and seeds defaults
+  async reseedCategories() {
+    // No borrar para evitar violaciones de FK; re-intenta sembrar (upsert por Name)
+    await this.seedCategories();
+  }
+
   private async seedSubscriptions() {
     const subscriptionsData = [
       {

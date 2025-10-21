@@ -64,10 +64,19 @@ export class AppointmentsController {
   @Put(':id')
   update(
     @Param('id') id: string,
-    @Body() status: string,
+    @Body('status') status: string,
     @Req() request
   ) {
     const user = request.user;
     return this.appointmentsService.update(id, status, user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('booked-hours/:providerId')
+  getBookedHours(
+    @Param('providerId') providerId: string,
+    @Query('date') date: string,
+  ) {
+    return this.appointmentsService.getBookedHours(providerId, date);
   }
 }

@@ -1,4 +1,4 @@
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { RegisterDto } from './register.dto';
 import { UserRole } from '../../common/enums/user-role.enum';
 
@@ -6,8 +6,9 @@ export class ProviderRegisterDto extends RegisterDto {
   // Forzar el rol como provider (comentado para evitar conflicto de tipos)
   // rol: UserRole.provider = UserRole.provider;
 
+  @IsOptional()
   @IsString()
-  serviceType: string;
+  serviceType?: string;
 
   @IsString()
   about: string;
@@ -17,4 +18,8 @@ export class ProviderRegisterDto extends RegisterDto {
 
   @IsString()
   horarios: string; // CSV e.g. "09:00,14:00"
+
+  @IsOptional()
+  @IsString()
+  categoryId?: string; // CategoryID from admin-defined categories
 }

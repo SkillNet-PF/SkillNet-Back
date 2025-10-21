@@ -8,6 +8,7 @@ import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Appointment } from './entities/appointment.entity';
 import { Repository } from 'typeorm';
+import { AppointmentsRepository } from './appointments.repository';
 import { User } from 'src/auth/entities/user.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { Client } from 'src/clients/entities/client.entity';
@@ -29,11 +30,12 @@ export class AppointmentsService {
     // @InjectRepository(Client)
     // private readonly clientRepository: Repository<Client>,
 
-    // @InjectRepository(ServiceProvider)
-    // private readonly providerRepository: Repository<ServiceProvider>,
+    @InjectRepository(ServiceProvider)
+    private readonly providerRepository: Repository<ServiceProvider>,
 
     @InjectRepository(Categories)
-    private readonly categoryRepository: Repository<Categories>
+    private readonly categoryRepository: Repository<Categories>,
+    private readonly appointmentsRepo: AppointmentsRepository,
     
   ){}
 
@@ -67,8 +69,9 @@ export class AppointmentsService {
 
 
     const categoryFound = await this.categoryRepository.findOneBy({Name: category})
-    const providerFound = await this.userRepository.findOne({
-      where: {name: provider, rol: UserRole.provider}, 
+    const providerFound = await this.providerRepository.findOne({
+      where: { name: provider },
+      relations: ['category'],
     })
 
     const proveedor = providerFound as ServiceProvider 
@@ -78,7 +81,9 @@ export class AppointmentsService {
     if (!categoryFound) throw new NotFoundException('Category not found')
     if (!proveedor) throw new NotFoundException('Provider not found')
 
-    if (proveedor.category !== categoryFound) throw new BadRequestException(`the provider does not have the category ${category}`)
+    if (!proveedor.category || proveedor.category.CategoryID !== categoryFound.CategoryID) {
+      throw new BadRequestException(`the provider does not have the category ${category}`)
+    }
    
     //convierto la fecha en un dia de la semana
     const appointmentDay = appointmentDateType.toLocaleDateString(
@@ -95,16 +100,11 @@ export class AppointmentsService {
       //verificar que el proveedor no tenga ordenes emitidas en esa fecha y horario
     const providerId = proveedor.userId
     
-    const existingAppointment = await this.appointmentRepository
-    .createQueryBuilder('appointment')
-    .leftJoin('appointment.UserProvider', 'provider')
-    .where('provider.userId = :providerId', { providerId })
-    .andWhere('appointment.AppointmentDate = :appointmentDate')
-    .andWhere('appointment.hour = :hour', { hour })
-    .andWhere('appointment.status = :status', { status: Status.CONFIRMED })
-    .andWhere('appointment.category = :category', { status: Status.PENDING })
-    .setParameter('appointmentDate', appointmentDateType)
-    .getOne();
+    const existingAppointment = await this.appointmentsRepo.findConflict(
+      providerId,
+      appointmentDateType,
+      hour,
+    );
     
     if (existingAppointment) throw new BadRequestException(`The provider is unavailable on ${appointmentDate} at ${hour}`)
     
@@ -120,7 +120,7 @@ export class AppointmentsService {
     appointment.UserClient = client;
     appointment.UserProvider = proveedor;
 
-    await this.appointmentRepository.save(appointment);
+    const saved = await this.appointmentsRepo.save(appointment);
 
     //restamos un servicio del usuario
 
@@ -128,9 +128,15 @@ export class AppointmentsService {
 
     await this.userRepository.update({userId: client.userId}, client)
     
-    return 'appointment succesfully saved'
+    return { message: 'appointment successfully saved', appointmentId: saved.AppointmentID };
     
 
+  }
+
+  async getBookedHours(providerId: string, dateISO: string): Promise<string[]> {
+    const appointmentDate = new Date(dateISO);
+    appointmentDate.setHours(0,0,0,0);
+    return this.appointmentsRepo.getBookedHours(providerId, appointmentDate);
   }
 
   async findUserAppointments(
@@ -151,9 +157,9 @@ export class AppointmentsService {
     
     const query = this.appointmentRepository
       .createQueryBuilder('appointment')
-      .leftJoinAndSelect('appointment.provider', 'provider')
+      .leftJoinAndSelect('appointment.UserProvider', 'provider')
       .leftJoinAndSelect('appointment.UserClient', 'client')
-      .leftJoinAndSelect('appointment.category', 'category')
+      .leftJoinAndSelect('appointment.Category', 'category')
       
       
      if (authUser.rol === UserRole.client) {
@@ -162,7 +168,7 @@ export class AppointmentsService {
       query.where('provider.userId = :userId', { userId: user.userId });
     }
      if (filters.status) {
-        query.andWhere('appointment.status = :status', { status: filters.status });
+        query.andWhere('appointment.Status = :status', { status: filters.status });
       }
 
       if (filters.category) {
@@ -170,9 +176,8 @@ export class AppointmentsService {
      }
 
       if (filters.providerId) {
-        
-       query.andWhere('provider.name = :provider', { provider:  filters.provider });
-     }
+        query.andWhere('provider.userId = :providerId', { providerId: filters.providerId });
+      }
     
       query.orderBy('appointment.AppointmentDate', 'DESC');
 

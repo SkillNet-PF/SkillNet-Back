@@ -97,7 +97,7 @@ export class AuthService {
     }
 
     // Preparar datos específicos para proveedor con mapeo de campos
-    const providerData = {
+    const providerData: any = {
       ...payload,
       externalAuthId,
       rol: UserRole.provider,
@@ -106,8 +106,14 @@ export class AuthService {
       bio: about, // about -> bio en la entidad
       dias: days?.split(',').map((s) => s.trim()), // string CSV -> array
       horarios: horarios?.split(',').map((s) => s.trim()), // string CSV -> array
-      serviceType: serviceType,
+      // serviceType pasa a ser opcional y puede omitirse
+      ...(serviceType ? { serviceType } : {}),
     };
+
+    // Mapear categoryId a la relación ManyToOne 'category'
+    if ((payload as any).categoryId) {
+      providerData.category = { CategoryID: (payload as any).categoryId };
+    }
 
     const createdProvider =
       await this.authRepository.createProvider(providerData);

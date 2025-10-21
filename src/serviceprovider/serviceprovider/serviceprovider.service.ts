@@ -26,7 +26,7 @@ async create(createServiceProviderDto: CreateServiceproviderDto) {
 
 
   async findAll() {
-    return  this.serviceprovider.find();
+    return this.serviceprovider.find({ relations: ['category'] });
   }
 
 
@@ -54,7 +54,14 @@ async create(createServiceProviderDto: CreateServiceproviderDto) {
     throw new NotFoundException(`El proveedor con id ${id} no existe`);
   }
 
-  Object.assign(provider, updateServiceproviderDto); 
+  // Mapear categoryId -> relación ManyToOne 'category'
+  const anyDto: any = updateServiceproviderDto as any;
+  if (anyDto.categoryId) {
+    provider.category = { CategoryID: anyDto.categoryId } as any;
+    delete anyDto.categoryId;
+  }
+
+  Object.assign(provider, anyDto); 
   return await this.serviceprovider.save(provider);
 }
 
