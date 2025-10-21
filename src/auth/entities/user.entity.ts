@@ -54,8 +54,8 @@ export abstract class User {
   rol!: UserRole;
 
   @OneToMany(()=>ActivityLog, (ActivityLog) => ActivityLog.user)
-  
-  activityLogs: ActivityLog[]
+  @JoinColumn({ name: 'activityLogs' })
+  activityLogs: ActivityLog[];
 
 
   @Column({ default: true })

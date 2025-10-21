@@ -16,12 +16,11 @@ export class ActivityLogService {
     return this.activityLogRepository.save(log);
   }
 
-  async getLatest(limit = 20) {
-    return this.activityLogRepository
-      .createQueryBuilder('log')
-      .leftJoinAndSelect('log.user', 'user')
-      .orderBy('log.createdAt', 'DESC')
-      .limit(limit)
-      .getMany();
+  async getLatest() {
+    const logs = await this.activityLogRepository.find({
+      relations:['user'], 
+      order: { createdAt: 'DESC' }});
+
+    return logs;
   }
 }
