@@ -26,7 +26,6 @@ import { RolesGuard } from '../guards/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../common/enums/user-role.enum';
 import { ClientsService } from './clients.service';
-// import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { ClientFilters } from './interfaces/client-filter';
 import { AuthenticatedClient } from './interfaces/authenticated-client';

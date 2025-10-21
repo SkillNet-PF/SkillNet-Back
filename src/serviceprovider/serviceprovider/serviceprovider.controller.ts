@@ -1,14 +1,29 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Put,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ServiceproviderService } from './serviceprovider.service';
 import { CreateServiceproviderDto } from './dto/create-serviceprovider.dto';
 import { UpdateServiceproviderDto } from './dto/update-serviceprovider.dto';
 import { Query } from '@nestjs/common';
 import { Roles } from 'src/auth/roles.decorator';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { UserRole } from 'src/common/enums/user-role.enum';
+import { RolesGuard } from 'src/guards/roles.guard';
 
 @Controller('serviceprovider')
 export class ServiceproviderController {
-  constructor(private readonly serviceproviderService: ServiceproviderService) {}
+  constructor(
+    private readonly serviceproviderService: ServiceproviderService,
+  ) {}
 
   // @Roles()
   // @UseGuards(JwtAuthGuard)
@@ -17,21 +32,35 @@ export class ServiceproviderController {
     return this.serviceproviderService.create(createServiceproviderDto);
   }
 
-    // @Roles()
+  // @Roles()
   // @UseGuards(JwtAuthGuard)
   @Get()
   findAll() {
     return this.serviceproviderService.findAll();
   }
 
-    // @Roles()
+  // @Roles()
   // @UseGuards(JwtAuthGuard)
+  //GET /serviceproviders/search?name=Juan&category=Peluqueria (forma de poner para probar )
+  @Get('search')
+  search(@Query('name') name?: string, @Query('category') category?: string) {
+    return this.serviceproviderService.search(name, category);
+  }
+
+  @Roles(UserRole.provider)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get('dashboard')
+  dashboard(@Req() req) {
+    const user = req.user;
+    return this.serviceproviderService.dashboard(user);
+    
+  }
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.serviceproviderService.findOne(id);
   }
 
-    // @Roles()
+  // @Roles()
   // @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(
@@ -41,18 +70,26 @@ export class ServiceproviderController {
     return this.serviceproviderService.update(id, updateServiceproviderDto);
   }
 
-    // @Roles(UserRole.admin)
+  // @Roles(UserRole.admin)
   // @UseGuards(JwtAuthGuard)
-  @Delete(':id')// solo admin 
+  @Delete(':id') // solo admin
   remove(@Param('id') id: string) {
     return this.serviceproviderService.remove(id);
   }
-//GET /serviceproviders/search?name=Juan&category=Peluqueria (forma de poner para probar )
-  @Get('search')
-search(
+
+  @Get('providers')
+async getProviders(
   @Query('name') name?: string,
   @Query('category') category?: string,
+  @Query('day') day?: string,
 ) {
-  return this.serviceproviderService.search(name, category);
+  return this.serviceproviderService.filterProviders(name, category, day);
 }
+// como usar :
+// /providers?name=Juan
+// /providers?category=Peluqueria
+// /providers?day=lunes
+// /providers?name=Juan&category=Peluqueria&day=lunes
+
+
 }

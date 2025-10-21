@@ -1,5 +1,5 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient, createClient } from '@supabase/supabase-js';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -10,15 +10,54 @@ export class SupabaseService {
   ) {}
 
   async signUpWithEmail(email: string, password: string) {
-    return this.supabase.auth.signUp({ email, password });
+    // Use anon key for public auth operations (signup) when available.
+    const anonKey =
+      this.config.get<string>('SUPABASE_ANON_KEY') ??
+      process.env.SUPABASE_ANON_KEY;
+    const url =
+      this.config.get<string>('SUPABASE_URL') ?? process.env.SUPABASE_URL;
+
+    if (anonKey && url) {
+      const client = createClient(
+        url.trim().replace(/\/$/, ''),
+        anonKey.trim(),
+      );
+      return client.auth.signUp({ email: email?.trim(), password });
+    }
+
+    // Fallback to the injected client
+    return this.supabase.auth.signUp({ email: email?.trim(), password });
   }
 
   async signInWithEmail(email: string, password: string) {
-    return this.supabase.auth.signInWithPassword({ email, password });
+    // Use anon key for sign-in with password when available.
+    const anonKey =
+      this.config.get<string>('SUPABASE_ANON_KEY') ??
+      process.env.SUPABASE_ANON_KEY;
+    const url =
+      this.config.get<string>('SUPABASE_URL') ?? process.env.SUPABASE_URL;
+
+    if (anonKey && url) {
+      const client = createClient(
+        url.trim().replace(/\/$/, ''),
+        anonKey.trim(),
+      );
+      return client.auth.signInWithPassword({ email: email?.trim(), password });
+    }
+
+    return this.supabase.auth.signInWithPassword({
+      email: email?.trim(),
+      password,
+    });
   }
 
-  async uploadUserImage(userId: string, fileBuffer: Buffer, fileName: string): Promise<string> {
-    const bucket = this.config.get<string>('SUPABASE_STORAGE_BUCKET')?.trim() || 'avatars';
+  async uploadUserImage(
+    userId: string,
+    fileBuffer: Buffer,
+    fileName: string,
+  ): Promise<string> {
+    const bucket =
+      this.config.get<string>('SUPABASE_STORAGE_BUCKET')?.trim() || 'avatars';
     try {
       const sanitized = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
       const path = `users/${userId}/${Date.now()}_${sanitized}`;
@@ -39,5 +78,3 @@ export class SupabaseService {
     }
   }
 }
-
-

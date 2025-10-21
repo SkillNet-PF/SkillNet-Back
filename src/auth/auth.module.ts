@@ -11,12 +11,16 @@ import { User } from './entities/user.entity';
 import { Client } from 'src/clients/entities/client.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 import { AuthRepository } from './auth-repository';
+import { MailModule } from '../mail/mail.module'
+import { Categories } from 'src/categories/entities/categories.entity';
+import { AdminModule } from 'src/admin/admin.module';
+
 // OIDC guard moved to src/guards; no import/export here
 
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([User, Client, ServiceProvider]),
+    TypeOrmModule.forFeature([User, Client, ServiceProvider, Categories]),
     PassportModule,
     JwtModule.registerAsync({
       global: true,
@@ -27,6 +31,9 @@ import { AuthRepository } from './auth-repository';
       }),
     }),
     SupabaseModule,
+    MailModule,
+    AdminModule,
+    
   ],
   providers: [AuthService, JwtStrategy, AuthRepository],
   controllers: [AuthController],

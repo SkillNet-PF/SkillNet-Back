@@ -6,6 +6,7 @@ import { Client } from 'src/clients/entities/client.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { RegisterClientDto } from './dto/register-client.dto';
+import { Categories } from 'src/categories/entities/categories.entity';
 
 @Injectable()
 export class AuthRepository {
@@ -16,6 +17,8 @@ export class AuthRepository {
     private readonly clientRepository: Repository<Client>,
     @InjectRepository(ServiceProvider)
     private readonly providerRepository: Repository<ServiceProvider>,
+    @InjectRepository(Categories)
+    private readonly categoryRepository: Repository<Categories>,
   ) {}
 
   async createClient(
@@ -38,10 +41,12 @@ export class AuthRepository {
     const enhancedClientData = {
       ...clientData,
       rol: UserRole.client, // Forzar rol de cliente
+      //se saca cuando terminemos de preparar la base de datos, el plan contratado se define luego de crear el usuario
       servicesLeft: getServicesByPlan(clientData.subscription as string),
       startDate: new Date(),
       endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días
-      paymentStatus: false,
+      paymentStatus: true,
+      ////////////////////////////////////////////////////////////////////////
     };
 
     const client = this.clientRepository.create(enhancedClientData);
@@ -72,34 +77,71 @@ export class AuthRepository {
   ): Promise<User> {
     const existing = await this.findByExternalAuthId(externalAuthId);
     if (existing) {
-      // Para updates, usar el repositorio correcto según el rol existente
       switch (existing.rol) {
-        case UserRole.client:
+        case UserRole.client: {
           const mergedClient = this.clientRepository.merge(
             existing as Client,
             userData,
           );
           return await this.clientRepository.save(mergedClient);
-        case UserRole.provider:
+        }
+        case UserRole.provider: {
           const mergedProvider = this.providerRepository.merge(
             existing as ServiceProvider,
             userData,
           );
           return await this.providerRepository.save(mergedProvider);
-        default:
+        }
+        default: {
           const merged = this.userRepository.merge(existing, userData);
           return await this.userRepository.save(merged);
+        }
       }
     }
-    // Si no existe, crear nuevo usando métodos específicos según rol
+
+    // Nuevo: crear según el rol que llega en userData (si no, cliente por defecto)
     const dataWithAuth = { ...userData, externalAuthId };
 
-    // Para Auth0, por defecto crear como cliente (puede ajustarse según lógica de negocio)
+    if (userData.rol === UserRole.provider) {
+      return await this.createProvider(dataWithAuth);
+    }
     return await this.createClient(dataWithAuth);
   }
 
   async findById(id: string): Promise<User | null> {
-    return await this.userRepository.findOne({ where: { userId: id } });
+    // Primero intentar encontrar como usuario base
+    const user = await this.userRepository.findOne({ where: { userId: id } });
+
+    if (!user) {
+      return null;
+    }
+
+    // Si es un proveedor, obtener datos completos de la tabla ServiceProvider
+    if (user.rol === UserRole.provider) {
+      const provider = await this.providerRepository.findOne({
+        where: { userId: id },
+        relations: ['category'], // Incluir la categoría si existe
+      });
+
+      if (provider) {
+        // Retornar los datos combinados del proveedor
+        return provider;
+      }
+    }
+
+    // Si es un cliente, obtener datos completos de la tabla Client
+    if (user.rol === UserRole.client) {
+      const client = await this.clientRepository.findOne({
+        where: { userId: id },
+      });
+
+      if (client) {
+        return client;
+      }
+    }
+
+    // Si no se encuentra en las tablas específicas, retornar el usuario base
+    return user;
   }
 
   async update(id: string, userData: Partial<User>): Promise<User | null> {

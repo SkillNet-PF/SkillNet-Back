@@ -3,3 +3,5 @@ export class PaymentMethodDto {
   cvv: string;
   expiryDate: string;
 }
+
+// DTO para la respuesta de los métodos de pago

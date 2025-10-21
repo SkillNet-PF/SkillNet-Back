@@ -13,6 +13,8 @@ import { SubscriptionModule } from './subscription/subscription.module';
 import { CategoriesModule } from './categories/categories.module';
 import { SeedsModule } from './seeds/seeds.module';
 import { InitialDataSeed } from './seeds/seeds.service';
+import { SupabaseModule } from './auth/supabase/supabase.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -40,13 +42,14 @@ import { InitialDataSeed } from './seeds/seeds.service';
           username,
           password,
           database,
-          dropSchema: false, // ✅ ACTIVAR DROP SCHEMA SOLO EN DESARROLLO (mantenemos tu config)
+          dropSchema: false, // ✅ ACTIVAR DROP SCHEMA SOLO EN DESARROLLO
           synchronize: true,
-          logging: false, // ✅ ACTIVAR LOGGING SQL (mantenemos tu config)
+          logging: false,
           autoLoadEntities: true,
         } as any;
       },
     }),
+    SupabaseModule,
     AuthModule,
     AppointmentsModule,
     ClientsModule,
@@ -54,6 +57,7 @@ import { InitialDataSeed } from './seeds/seeds.service';
     SubscriptionModule,
     CategoriesModule,
     SeedsModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],
@@ -65,4 +69,3 @@ export class AppModule implements OnModuleInit {
     await this.seedService.run();
   }
 }
-

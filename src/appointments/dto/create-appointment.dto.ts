@@ -7,8 +7,8 @@ export class CreateAppointmentDto {
     category: string; //nombre de la categoria
 
     @IsNotEmpty()
-    @IsDate()
-    appointmentDate:Date;
+    @IsString()
+    appointmentDate:string;
 
     @IsNotEmpty()
     hour: string;

@@ -12,11 +12,11 @@ async function bootstrap() {
     origin: [
       'http://localhost:5173',
       'http://127.0.0.1:5173',
-      process.env.FRONTEND_ORIGIN ?? ''
+      process.env.FRONTEND_ORIGIN ?? '',
     ].filter(Boolean),
     credentials: true,
-    methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
-    allowedHeaders: ['Content-Type','Authorization']
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
   app.use(createAuth0Middleware());
   app.useGlobalPipes(
@@ -45,6 +45,10 @@ async function bootstrap() {
   } catch (error) {
     throw new Error(`⚠️ Error starting server: ${error}`);
   }
+
+  //TODO:LOG PARA DEBUG DE SUPABASE, VER SI LA URL ES LA CORRECTA
+  // console.log('CWD:', process.cwd());
+  // console.log('ENV URL at boot:', process.env.SUPABASE_URL);
 }
 
 bootstrap();
