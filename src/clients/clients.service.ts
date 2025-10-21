@@ -59,51 +59,46 @@ export class ClientsService {
     updateClientDto: UpdateClientDto,
     user?: AuthenticatedClient,
   ) {
-    if (user && user.rol === UserRole.client && user.userId !== id) {
+    // Un cliente solo puede editar su propio perfil
+    if (user?.rol === UserRole.client && user.userId !== id) {
       throw new ForbiddenException('No se puede modificar este perfil');
     }
 
-    if (updateClientDto.newPassword && !updateClientDto.currentPassword) {
-      throw new ForbiddenException(
-        'La contraseña actual es requerida para cambiar la contraseña',
-      );
-    }
-
+    // Si quiere cambiar contraseña, validar flujo de password
     if (updateClientDto.newPassword) {
-      const clientData = await this.clientsRepository.getClientProfile(id);
+      if (!updateClientDto.currentPassword) {
+        throw new BadRequestException(
+          'La contraseña actual es requerida para cambiar la contraseña',
+        );
+      }
 
+      const clientData = await this.clientsRepository.getClientProfile(id);
       if (!clientData) {
         throw new NotFoundException('Cliente no encontrado');
       }
 
-      // Validar contraseña actual con Supabase Auth
-      if (!updateClientDto.currentPassword) {
-        throw new BadRequestException(
-          'La contraseña actual es requerida para actualizar el perfil',
-        );
+      // Narrowing: asegurar email antes de usarlo
+      const email = clientData.email;
+      if (!email) {
+        throw new BadRequestException('El cliente no tiene email registrado.');
       }
 
       const isValidPassword = await this.validatePasswordWithSupabase(
-        clientData.email,
+        email,
         updateClientDto.currentPassword,
       );
-
       if (!isValidPassword) {
         throw new ForbiddenException('La contraseña actual es incorrecta');
       }
 
-      // Actualizar contraseña en Supabase Auth
-      if (updateClientDto.newPassword) {
-        await this.updatePasswordInSupabase(updateClientDto.newPassword);
-        console.log('✅ Contraseña actualizada en Supabase Auth');
-      }
+      await this.updatePasswordInSupabase(updateClientDto.newPassword);
 
-      // Limpiar campos de contraseña del DTO (NO se guardan en PostgreSQL)
-      const { currentPassword, newPassword, ...updateData } = updateClientDto;
-      updateClientDto = updateData as UpdateClientDto;
+      // Limpiar campos de contraseña antes de persistir el perfil
+      const { currentPassword, newPassword, ...rest } = updateClientDto;
+      updateClientDto = rest as UpdateClientDto;
     }
 
-    // Actualizar solo datos de perfil en PostgreSQL
+    // Persistir solo datos de perfil en PostgreSQL
     return this.clientsRepository.updateClientProfile(id, updateClientDto);
   }
 

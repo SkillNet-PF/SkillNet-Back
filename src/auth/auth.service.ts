@@ -19,8 +19,8 @@ export class AuthService {
     private readonly authRepository: AuthRepository,
     private readonly supabase: SupabaseService,
     private readonly mailService: MailService,
-   @InjectRepository(Categories)
-       private readonly categoryRepository: Repository<Categories>,
+    @InjectRepository(Categories)
+    private readonly categoryRepository: Repository<Categories>,
   ) {}
 
   async registerClient(
@@ -67,10 +67,15 @@ export class AuthService {
       throw new UnauthorizedException('Error generando token de acceso');
     }
 
-    //  Enviar correo de confirmación
+    if (!createdClient.email) {
+      throw new UnauthorizedException(
+        'El cliente no tiene email válido para enviar confirmación.',
+      );
+    }
+
     await this.mailService.sendRegistrationEmail(
       createdClient.email,
-      createdClient.name || 'Usuario',
+      createdClient.name ?? 'Usuario',
     );
 
     return {
@@ -101,7 +106,9 @@ export class AuthService {
       throw new UnauthorizedException('Error obteniendo ID de autenticación');
     }
 
-    const categoryFound = await this.categoryRepository.findOneBy({Name: category})
+    const categoryFound = await this.categoryRepository.findOneBy({
+      Name: category,
+    });
 
     if (!categoryFound) throw new UnauthorizedException('Category not found');
 
@@ -135,11 +142,18 @@ export class AuthService {
       throw new UnauthorizedException('Error generando token de acceso');
     }
 
-    //  Enviar correo de confirmación al proveedor
+    //  Enviar correo de confirmación al proveedor (solo si hay email)
+    if (!createdProvider.email) {
+      throw new UnauthorizedException(
+        'El proveedor no tiene email válido para enviar confirmación.',
+      );
+    }
+
     await this.mailService.sendRegistrationEmail(
       createdProvider.email,
-      createdProvider.name || 'Proveedor',
+      createdProvider.name ?? 'Proveedor',
     );
+
     return { user: createdProvider, accessToken };
   }
 
@@ -167,28 +181,31 @@ export class AuthService {
 
   async upsertFromAuth0Profile(
     auth0User: any,
-    role: UserRole = UserRole.client,
+    requestedRole: UserRole = UserRole.client,
   ): Promise<{ user: User; accessToken: string }> {
     const externalAuthId: string = auth0User?.sub ?? '';
     const email: string = auth0User?.email ?? '';
-    const name: string = auth0User?.name ?? auth0User?.nickname ?? '';
-    const imgProfile: string | undefined = auth0User?.picture;
 
     if (!externalAuthId || !email) {
       throw new UnauthorizedException('Invalid OIDC profile');
     }
 
+    const name: string = auth0User?.name ?? auth0User?.nickname ?? '';
+    const imgProfile: string | undefined = auth0User?.picture;
+
     const userData: Partial<User> = {
       email,
       name,
       imgProfile,
-      rol: role, // Usar el rol proporcionado
+      rol: requestedRole,
+      isActive: true,
     };
 
     const user = await this.authRepository.upsertByExternalAuthId(
       externalAuthId,
       userData,
     );
+
     const accessToken = await this.signJwt(user);
     return { user, accessToken };
   }
