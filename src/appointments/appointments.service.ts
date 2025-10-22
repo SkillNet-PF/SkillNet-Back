@@ -93,7 +93,7 @@ export class AppointmentsService {
 
 
     if (providerFound.category.CategoryID !== categoryFound.CategoryID) throw new BadRequestException(`the provider does not have the category ${category}`)
-   
+    
     //convierto la fecha en un dia de la semana
     const appointmentDay = appointmentDateType.toLocaleDateString(
       'es-ES', 
@@ -274,6 +274,19 @@ export class AppointmentsService {
       client.servicesLeft = client.servicesLeft + 1
       await this.userRepository.update({userId: client.userId}, client)
       await this.activityLogService.create(authUser, 'Cancelo un turno')
+
+      // 🔹 ENVIO DE CORREO DE CANCELACION
+  try {
+    await this.mailService.sendAppointmentCancellation(
+      client.email,               // correo del cliente
+      client.name,                // nombre del cliente
+      appointment.AppointmentDate.toISOString(), // fecha del turno
+      appointment.hour,           // hora del turno
+      appointment.UserProvider.name // nombre del proveedor
+    );
+  } catch (err) {
+    console.error('⚠️ No se pudo enviar el correo de cancelación del turno:', err); // 🔹 manejo de error
+  }
     };
 
     //confirma el appointment solo para proveedor
