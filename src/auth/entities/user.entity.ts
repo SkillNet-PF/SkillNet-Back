@@ -32,8 +32,8 @@ export abstract class User {
   @Column()
   name!: string;
 
-  @Column({ nullable: false })
-  birthDate!: string;
+  @Column({ nullable: true })
+  birthDate?: string;
 
   @Column({ unique: true })
   email!: string;
