@@ -23,7 +23,7 @@ ENV PORT=3000
 EXPOSE 3000
 
 RUN apk add --no-cache curl
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=5 CMD sh -c 'curl -fsS http://127.0.0.1:${PORT:-3000}/ || exit 1'
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=5 CMD sh -c 'curl -sS http://127.0.0.1:${PORT:-3000}/ >/dev/null || exit 1'
 
 CMD ["node", "dist/main.js"]
 
