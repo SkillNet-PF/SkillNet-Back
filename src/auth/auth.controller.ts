@@ -15,10 +15,9 @@ import {
   Res,
   UnauthorizedException,
 } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
-import { AuthRepository } from './auth-repository';
 import { RegisterClientDto } from './dto/register-client.dto';
 import { ProviderRegisterDto } from './dto/provider-register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -36,218 +35,92 @@ import {
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  
-  @Post('register')
-  @ApiOperation({
-      summary: 'registrar usuario ',
-      description:
-        'registrar usuario como cliente o provedor ',
-    })
-  
-    @ApiBody({
-    description: 'Datos necesarios para registrar un usuario',
-    required: true,
-    schema: {
-      type: 'object',
-      properties: {
-        imgProfile: {
-          type: 'string',
-          example: 'https://cdn.miapp.com/users/avatar.jpg',
-        },
-        name: {
-          type: 'string',
-          example: 'jose martinez ',
-        },
-        birthDate: {
-          type: 'string',
-          example: '1996-11-25',
-        },
-        email: {
-          type: 'string',
-          example: 'josemartinez@example.com',
-        },
-        password: {
-          type: 'string',
-          example: 'MiContraseñaSegura123',
-        },
-        address: {
-          type: 'string',
-          example: 'Av. Corrientes 1500, CABA, Argentina',
-        },
-        phone: {
-          type: 'string',
-          example: '+54 9 11 5555 5555',
-        },
-        rol: {
-          type: 'string',
-          enum: Object.values(UserRole),
-          example: 'client',
-        },
-      },
-      required: ['name', 'email', 'password', 'rol'],
-    },
-  }) 
+  // ---------- Registro local ----------
   @Post('registerClient')
   @ApiOperation({ summary: 'Registrar nuevo cliente' })
-    @ApiBody({
+  @ApiBody({
     description: 'Datos necesarios para registrar un usuario',
     required: true,
     schema: {
       type: 'object',
       properties: {
-        imgProfile: {
-          type: 'string',
-          example: 'https://cdn.miapp.com/users/avatar.jpg',
-        },
-        name: {
-          type: 'string',
-          example: 'jose martinez ',
-        },
-        birthDate: {
-          type: 'string',
-          example: '1996-11-25',
-        },
-        email: {
-          type: 'string',
-          example: 'josemartinez@example.com',
-        },
-        password: {
-          type: 'string',
-          example: 'MiContraseñaSegura123',
-        },
-        address: {
-          type: 'string',
-          example: 'Av. Corrientes 1500, CABA, Argentina',
-        },
-        phone: {
-          type: 'string',
-          example: '+54 9 11 5555 5555',
-        },
-        rol: {
-          type: 'string',
-          enum: Object.values(UserRole),
-          example: 'client',
-        },
+        imgProfile: { type: 'string' },
+        name: { type: 'string' },
+        birthDate: { type: 'string' },
+        email: { type: 'string' },
+        password: { type: 'string' },
+        address: { type: 'string' },
+        phone: { type: 'string' },
+        rol: { type: 'string', enum: Object.values(UserRole) },
       },
       required: ['name', 'email', 'password', 'rol'],
     },
-  }) 
+  })
   async registerClient(@Body() dto: RegisterClientDto) {
     return this.authService.registerClient(dto);
   }
 
   @Post('registerProvider')
   @ApiOperation({ summary: 'Registrar nuevo proveedor' })
-    @ApiBody({
-    description: 'Datos necesarios para registrar un usuario',
+  @ApiBody({
+    description: 'Datos necesarios para registrar un proveedor',
     required: true,
     schema: {
       type: 'object',
       properties: {
-        imgProfile: {
-          type: 'string',
-          example: 'https://cdn.miapp.com/users/avatar.jpg',
-        },
-        name: {
-          type: 'string',
-          example: 'jose martinez ',
-        },
-        birthDate: {
-          type: 'string',
-          example: '1996-11-25',
-        },
-        email: {
-          type: 'string',
-          example: 'josemartinez@example.com',
-        },
-        password: {
-          type: 'string',
-          example: 'MiContraseñaSegura123',
-        },
-        address: {
-          type: 'string',
-          example: 'Av. Corrientes 1500, CABA, Argentina',
-        },
-        phone: {
-          type: 'string',
-          example: '+54 9 11 5555 5555',
-        },
-        rol: {
-          type: 'string',
-          enum: Object.values(UserRole),
-          example: 'client',
-        },
-        serviceType: {
-        type: 'string',
-        example: 'Peluquería y estética',
+        imgProfile: { type: 'string' },
+        name: { type: 'string' },
+        birthDate: { type: 'string' },
+        email: { type: 'string' },
+        password: { type: 'string' },
+        address: { type: 'string' },
+        phone: { type: 'string' },
+        rol: { type: 'string', enum: Object.values(UserRole) },
+        serviceType: { type: 'string' },
+        about: { type: 'string' },
+        days: { type: 'string' },
+        horarios: { type: 'string' },
       },
-        about: {
-        type: 'string',
-        example: 'Ofrezco servicios de peluquería profesional con más de 10 años de experiencia.',
-      },
-        days: {
-        type: 'string',
-        example: 'lunes,martes,miércoles,jueves,viernes',
-        description: 'Días de atención (separados por coma)',
-      },
-        horarios: {
-        type: 'string',
-        example: '09:00,14:00',
-        description: 'Horarios disponibles (formato CSV: hora de inicio,hora de fin)',
-      },
-      },
-      required: ['name', 'email', 'password', 'rol','serviceType','about','days','horarios',],
+      required: [
+        'name',
+        'email',
+        'password',
+        'rol',
+        'serviceType',
+        'about',
+        'days',
+        'horarios',
+      ],
     },
-  }) 
+  })
   async registerProvider(@Body() dto: ProviderRegisterDto) {
     return this.authService.registerProvider(dto);
   }
 
+  // ---------- Login local ----------
   @Post('login')
   @ApiOperation({
-  summary: 'Loggear usuario',
-  description: 'Permite a un usuario iniciar sesión con su email y contraseña',
-})
-@ApiBody({
-  description: 'Datos para loggearse',
-  required: true,
-  schema: {
-    type: 'object',
-    properties: {
-      email: {
-        type: 'string',
-        example: 'josemartinez@example.com',
+    summary: 'Loggear usuario (local)',
+    description: 'Inicio de sesión con email/password (Supabase Auth)',
+  })
+  @ApiBody({
+    description: 'Datos para loggearse',
+    required: true,
+    schema: {
+      type: 'object',
+      properties: {
+        email: { type: 'string' },
+        password: { type: 'string' },
       },
-      password: {
-        type: 'string',
-        example: 'MiContraseñaSegura123',
-      },
+      required: ['email', 'password'],
     },
-    required: ['email', 'password'], 
-  },
-})
-@HttpCode(HttpStatus.OK)
+  })
+  @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }
 
-  @Post('auth0/register/client')
-  @UseGuards(Auth0Guard)
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Registrar cliente via Auth0' })
-  async auth0RegisterClient(@Req() req) {
-    const auth0User = req.oidc?.user;
-    return this.authService.upsertFromAuth0Profile(auth0User);
-  }
-
-  @Post('auth0/register/provider')
-  @UseGuards(Auth0Guard)
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Registrar proveedor via Auth0' })
-  async auth0RegisterProvider(@Req() req) {
-    const auth0User = req.oidc?.user;
-    return this.authService.upsertFromAuth0Profile(auth0User);
-  }
+  // ---------- Inicio del flujo OAuth ----------
 
   @Get('auth0/start/:role')
   @ApiOperation({
@@ -257,75 +130,52 @@ export class AuthController {
   })
   async startOAuth(
     @Param('role') role: string,
-    @Query('connection') connection: string,
+    @Query('connection') connection: string | undefined,
     @Req() req: any,
-    @Res() res: Response,
+    @Res() res: any, // usar "any" para acceder a res.oidc sin error de tipos
   ) {
     if (role !== 'client' && role !== 'provider') {
       throw new BadRequestException('Rol debe ser client o provider');
     }
-
-    const allowedConnections = ['google-oauth2', 'github'];
-    if (connection && !allowedConnections.includes(connection)) {
+    const allowed = ['google-oauth2', 'github'];
+    if (connection && !allowed.includes(connection)) {
       throw new BadRequestException('Conexión no soportada');
     }
 
-    req.session = req.session || {};
-    req.session.pendingRole = role;
-
-    const auth0Domain = process.env.ISSUER_BASE_URL?.replace(
-      'https://',
-      '',
-    ).replace('/', '');
-    const clientId = process.env.CLIENT_ID;
-    const redirectUri = `${process.env.BASE_URL}auth/auth0/callback`;
-
-    const params = new URLSearchParams({
-      response_type: 'code',
-      client_id: clientId!,
-      redirect_uri: redirectUri,
-      scope: 'openid profile email',
-      state: `role=${role}`,
-    });
-
-    if (connection) {
-      params.append('connection', connection);
+    // Guardamos el rol solicitado en sesión (opcional, por si quieres leerlo luego)
+    if (req.session) {
+      req.session.pendingRole = role;
     }
 
-    const authUrl = `https://${auth0Domain}/authorize?${params.toString()}`;
-    return res.redirect(authUrl);
+    // IMPORTANTE: login() está en res.oidc
+    return res.oidc.login({
+      returnTo: '/auth/auth0/callback/finish',
+      authorizationParams: {
+        scope: 'openid profile email',
+        ...(connection ? { connection } : {}),
+        state: `role=${role}`,
+      },
+    });
   }
 
-  @Get('auth0/callback')
-  @ApiOperation({
-    summary: 'Procesar callback OAuth',
-  })
-  async handleOAuthCallback(
-    @Req() req: any,
-    @Res() res: Response,
-    @Query('state') state?: string,
-  ) {
-    if (!req.oidc || !req.oidc.isAuthenticated()) {
+  // ---------- FIN del callback ----------
+
+  @Get('auth0/callback/finish')
+  @UseGuards(Auth0Guard)
+  @ApiOperation({ summary: 'Finalizar callback OAuth' })
+  async finishOAuth(@Req() req: any, @Res() res: Response) {
+    if (!req?.oidc?.isAuthenticated?.()) {
       throw new UnauthorizedException('Usuario no autenticado por Auth0');
     }
 
-    let userRole: 'client' | 'provider' = 'client';
-
-    if (state && state.includes('role=')) {
-      const roleMatch = state.match(/role=([^&]+)/);
-      const extractedRole = roleMatch ? roleMatch[1] : 'client';
-
-      if (extractedRole === 'client' || extractedRole === 'provider') {
-        userRole = extractedRole;
-      }
-    }
-
     const auth0User = req.oidc.user;
-    const { sub: externalAuthId, email, name, picture } = auth0User;
-
-    if (!externalAuthId || !email) {
-      throw new BadRequestException('Datos de usuario incompletos');
+    if (!auth0User?.sub || !auth0User?.email) {
+      throw new BadRequestException('Perfil OIDC incompleto');
     }
+
+    let userRole: 'client' | 'provider' = 'client';
+    const qRole = (req.query?.role as string) || '';
+    if (qRole === 'client' || qRole === 'provider') userRole = qRole;
 
     const roleEnum =
       userRole === 'provider' ? UserRole.provider : UserRole.client;
@@ -335,11 +185,14 @@ export class AuthController {
     );
 
     const frontendUrl = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
-    const redirectUrl = `${frontendUrl}/auth/callback?token=${accessToken}&role=${user.rol}`;
+    const redirectUrl = `${frontendUrl}/auth/callback?token=${encodeURIComponent(
+      accessToken,
+    )}&role=${encodeURIComponent(user.rol)}`;
 
     return res.redirect(redirectUrl);
   }
 
+  // ---------- Perfil actual ----------
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -348,22 +201,19 @@ export class AuthController {
   })
   async me(@Req() req) {
     const userId = req.user?.userId;
-    const userRole = req.user?.rol;
-
-    if (!userId) {
+    if (!userId)
       throw new BadRequestException('Usuario no encontrado en el token');
-    }
 
     const user = await this.authService.me(userId);
-    if (!user) {
+    if (!user)
       throw new BadRequestException(
         'Usuario no encontrado en la base de datos',
       );
-    }
 
     return { user };
   }
 
+  // ---------- Upload avatar ----------
   @Post('upload-avatar')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('avatar'))
@@ -374,27 +224,15 @@ export class AuthController {
     description: 'Archivo de imagen para el avatar del usuario',
     schema: {
       type: 'object',
-      properties: {
-        avatar: {
-          type: 'string',
-          format: 'binary',
-        },
-      },
+      properties: { avatar: { type: 'string', format: 'binary' } },
     },
   })
   async uploadAvatar(@Req() req, @UploadedFile() file: any) {
     const userId = req.user?.userId;
-
-    if (!userId) {
+    if (!userId)
       throw new BadRequestException('Usuario no encontrado en el token');
-    }
-
-    if (!file) {
-      throw new BadRequestException('Archivo de imagen requerido');
-    }
+    if (!file) throw new BadRequestException('Archivo de imagen requerido');
 
     return this.authService.uploadAvatar(userId, file);
   }
 }
-
-

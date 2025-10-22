@@ -11,10 +11,6 @@ import { UserRole } from '../../common/enums/user-role.enum';
 import { v4 as uuid } from 'uuid';
 import { ActivityLog } from 'src/admin/entity/activityLog.entity';
 
-// ===== CONFIGURACIÓN ORIGINAL (COMENTADA PARA ROLLBACK) =====
-// @TableInheritance({ column: { type: 'enum', name: 'rol' } })
-// ===== FIN CONFIGURACIÓN ORIGINAL =====
-
 // ===== NUEVA CONFIGURACIÓN CON DISCRIMINADOR EXPLÍCITO =====
 @Entity('users')
 @TableInheritance({
@@ -30,22 +26,22 @@ export abstract class User {
   imgProfile?: string;
 
   @Column()
-  name!: string;
+  name?: string;
 
   @Column({ nullable: true })
-  birthDate!: string;
+  birthDate?: string;
 
   @Column({ unique: true })
-  email!: string;
+  email?: string;
 
   @Column()
   externalAuthId!: string;
 
   @Column({ nullable: true })
-  address!: string;
+  address?: string;
 
   @Column({ nullable: true })
-  phone!: string;
+  phone?: string;
 
   @Column({
     type: 'enum',
