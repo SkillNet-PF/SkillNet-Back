@@ -3,14 +3,8 @@ import { Categories } from 'src/categories/entities/categories.entity';
 import { User } from 'src/auth/entities/user.entity';
 import { Column, ManyToOne, JoinColumn, ChildEntity, OneToMany } from 'typeorm';
 
-// ===== CÓDIGO ORIGINAL (COMENTADO PARA ROLLBACK) =====
-// @ChildEntity('providers')
-// ===== FIN CÓDIGO ORIGINAL =====
-
-
 @ChildEntity('provider')
 export class ServiceProvider extends User {
-
   @Column('text', { nullable: true })
   bio: string;
 

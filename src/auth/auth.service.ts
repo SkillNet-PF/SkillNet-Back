@@ -8,10 +8,11 @@ import { SupabaseService } from './supabase/supabase.service';
 import { UserRole } from '../common/enums/user-role.enum';
 import { ProviderRegisterDto } from './dto/provider-register.dto';
 import { MailService } from '../mail/mail.service';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Categories } from 'src/categories/entities/categories.entity';
 import { ActivityLogService } from 'src/admin/activityLog.service';
+import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 
 @Injectable()
 export class AuthService {
@@ -20,15 +21,15 @@ export class AuthService {
     private readonly authRepository: AuthRepository,
     private readonly supabase: SupabaseService,
     private readonly mailService: MailService,
-    private readonly ActivityLogService: ActivityLogService,
-   @InjectRepository(Categories)
-       private readonly categoryRepository: Repository<Categories>,
+    private readonly activityLogService: ActivityLogService, // ← nombre en camelCase
+    @InjectRepository(Categories)
+    private readonly categoryRepository: Repository<Categories>,
   ) {}
 
   async registerClient(
     payload: RegisterClientDto,
   ): Promise<{ user: User; accessToken: string }> {
-    const { email, password, name } = payload;
+    const { email, password } = payload;
 
     // Crear usuario en Supabase Auth
     const { data, error } = await this.supabase.signUpWithEmail(
@@ -42,21 +43,19 @@ export class AuthService {
     }
 
     const externalAuthId = data.user?.id ?? '';
-
     if (!externalAuthId) {
       throw new UnauthorizedException('Error obteniendo ID de autenticación');
     }
 
-    // Preparar datos específicos para cliente
+    // Datos específicos para cliente
     const clientData: Partial<User> = {
       ...payload,
       externalAuthId,
       rol: payload.rol,
-      isActive: true, // Establecer como activo por defecto
+      isActive: true,
     };
 
     const createdClient = await this.authRepository.createClient(clientData);
-
     if (!createdClient) {
       throw new UnauthorizedException(
         'Error creando cliente en la base de datos',
@@ -64,24 +63,28 @@ export class AuthService {
     }
 
     const accessToken = await this.signJwt(createdClient);
-
     if (!accessToken) {
       throw new UnauthorizedException('Error generando token de acceso');
     }
 
-    // Enviar correo de confirmación sin bloquear la respuesta
-    this.mailService
-      .sendRegistrationEmail(
-        createdClient.email,
-        createdClient.name || 'Usuario',
-      )
-      .catch(() => undefined);
+    if (!createdClient.email) {
+      throw new UnauthorizedException(
+        'El cliente no tiene email válido para enviar confirmación.',
+      );
+    }
 
-    await this.ActivityLogService.create(createdClient, 'Creo una cuenta de cliente');
-    return {
-      user: createdClient,
-      accessToken,
-    };
+    await this.mailService.sendRegistrationEmail(
+      createdClient.email,
+      createdClient.name ?? 'Usuario',
+    );
+
+    // Registrar actividad
+    await this.activityLogService.create(
+      createdClient,
+      'Creo una cuenta de cliente',
+    );
+
+    return { user: createdClient, accessToken };
   }
 
   async registerProvider(
@@ -101,33 +104,29 @@ export class AuthService {
     }
 
     const externalAuthId = data.user?.id ?? '';
-
     if (!externalAuthId) {
       throw new UnauthorizedException('Error obteniendo ID de autenticación');
     }
 
-    const categoryFound = await this.categoryRepository.findOneBy({Name: category})
-
+    const categoryFound = await this.categoryRepository.findOneBy({
+      Name: category,
+    });
     if (!categoryFound) throw new UnauthorizedException('Category not found');
 
-    // Preparar datos específicos para proveedor con mapeo de campos
-    const providerData = {
+    // Datos específicos para proveedor
+    const providerData: Partial<ServiceProvider> = {
       ...payload,
       externalAuthId,
       rol: UserRole.provider,
-      isActive: true, // Establecer como activo por defecto
-      // Mapear campos específicos del proveedor
-
-      //si los horarios y dias los traemos del front con un checkbox ¿como llega al back?
-      bio: about, // about -> bio en la entidad
-      dias: days.split(',').map((s) => s.trim()), // string CSV -> array
-      horarios: horarios.split(',').map((s) => s.trim()), // string CSV -> array
+      isActive: true,
+      bio: about,
+      dias: days.split(',').map((s) => s.trim()),
+      horarios: horarios.split(',').map((s) => s.trim()),
       category: categoryFound,
     };
 
     const createdProvider =
       await this.authRepository.createProvider(providerData);
-
     if (!createdProvider) {
       throw new UnauthorizedException(
         'Error creando proveedor en la base de datos',
@@ -135,19 +134,27 @@ export class AuthService {
     }
 
     const accessToken = await this.signJwt(createdProvider);
-
     if (!accessToken) {
       throw new UnauthorizedException('Error generando token de acceso');
     }
 
-    // Enviar correo sin bloquear la respuesta
-    this.mailService
-      .sendRegistrationEmail(
-        createdProvider.email,
-        createdProvider.name || 'Proveedor',
-      )
-      .catch(() => undefined);
-    await this.ActivityLogService.create(createdProvider, 'Creo una cuenta de proveedor');
+    if (!createdProvider.email) {
+      throw new UnauthorizedException(
+        'El proveedor no tiene email válido para enviar confirmación.',
+      );
+    }
+
+    await this.mailService.sendRegistrationEmail(
+      createdProvider.email,
+      createdProvider.name ?? 'Proveedor',
+    );
+
+    // Registrar actividad
+    await this.activityLogService.create(
+      createdProvider,
+      'Creo una cuenta de proveedor',
+    );
+
     return { user: createdProvider, accessToken };
   }
 
@@ -175,28 +182,31 @@ export class AuthService {
 
   async upsertFromAuth0Profile(
     auth0User: any,
-    role: UserRole = UserRole.client,
+    requestedRole: UserRole = UserRole.client,
   ): Promise<{ user: User; accessToken: string }> {
     const externalAuthId: string = auth0User?.sub ?? '';
     const email: string = auth0User?.email ?? '';
-    const name: string = auth0User?.name ?? auth0User?.nickname ?? '';
-    const imgProfile: string | undefined = auth0User?.picture;
 
     if (!externalAuthId || !email) {
       throw new UnauthorizedException('Invalid OIDC profile');
     }
 
+    const name: string = auth0User?.name ?? auth0User?.nickname ?? '';
+    const imgProfile: string | undefined = auth0User?.picture;
+
     const userData: Partial<User> = {
       email,
       name,
       imgProfile,
-      rol: role, // Usar el rol proporcionado
+      rol: requestedRole,
+      isActive: true,
     };
 
     const user = await this.authRepository.upsertByExternalAuthId(
       externalAuthId,
       userData,
     );
+
     const accessToken = await this.signJwt(user);
     return { user, accessToken };
   }
