@@ -1,26 +1,53 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { Categories } from './entities/categories.entity';
 
 @Injectable()
 export class CategoriesService {
-  create(createCategoryDto: CreateCategoryDto) {
-    return 'This action adds a new category';
+  constructor(
+    @InjectRepository(Categories)
+    private readonly repo: Repository<Categories>,
+  ) {}
+
+  async create(createCategoryDto: CreateCategoryDto) {
+    const entity = this.repo.create({
+      Name: createCategoryDto.name,
+      isActive: createCategoryDto.isActive ?? true,
+    });
+    return await this.repo.save(entity);
+  }
+
+  async createMany(payload: CreateCategoryDto[]) {
+    const entities = payload.map((c) =>
+      this.repo.create({ Name: c.name, isActive: c.isActive ?? true }),
+    );
+    return await this.repo.save(entities);
   }
 
   findAll() {
-    return `This action returns all categories`;
+    return this.repo.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} category`;
+  findOne(id: string) {
+    return this.repo.findOne({ where: { CategoryID: id } });
   }
 
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${id} category`;
+  async update(id: string, updateCategoryDto: UpdateCategoryDto) {
+    await this.repo.update(
+      { CategoryID: id },
+      {
+        Name: (updateCategoryDto as any).name,
+        isActive: (updateCategoryDto as any).isActive,
+      },
+    );
+    return this.findOne(id);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} category`;
+  async remove(id: string) {
+    await this.repo.delete({ CategoryID: id });
+    return { deleted: true };
   }
 }

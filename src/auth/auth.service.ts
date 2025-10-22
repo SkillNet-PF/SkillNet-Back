@@ -69,11 +69,13 @@ export class AuthService {
       throw new UnauthorizedException('Error generando token de acceso');
     }
 
-    //  Enviar correo de confirmación
-    await this.mailService.sendRegistrationEmail(
-      createdClient.email,
-      createdClient.name || 'Usuario',
-    );
+    // Enviar correo de confirmación sin bloquear la respuesta
+    this.mailService
+      .sendRegistrationEmail(
+        createdClient.email,
+        createdClient.name || 'Usuario',
+      )
+      .catch(() => undefined);
 
     await this.ActivityLogService.create(createdClient, 'Creo una cuenta de cliente');
     return {
@@ -138,11 +140,13 @@ export class AuthService {
       throw new UnauthorizedException('Error generando token de acceso');
     }
 
-    //  Enviar correo de confirmación al proveedor
-    await this.mailService.sendRegistrationEmail(
-      createdProvider.email,
-      createdProvider.name || 'Proveedor',
-    );
+    // Enviar correo sin bloquear la respuesta
+    this.mailService
+      .sendRegistrationEmail(
+        createdProvider.email,
+        createdProvider.name || 'Proveedor',
+      )
+      .catch(() => undefined);
     await this.ActivityLogService.create(createdProvider, 'Creo una cuenta de proveedor');
     return { user: createdProvider, accessToken };
   }
