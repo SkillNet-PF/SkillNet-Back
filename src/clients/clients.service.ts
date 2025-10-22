@@ -28,7 +28,7 @@ export class ClientsService {
 
   async getAllClients(page: number, limit: number, filters?: ClientFilters) {
     const validPage = Math.max(1, page);
-    const validLimit = Math.min(Math.max(1, limit), 100); //
+    const validLimit = Math.min(Math.max(1, limit), 100);
 
     const result = await this.clientsRepository.getAllClients(
       validPage,
@@ -47,9 +47,9 @@ export class ClientsService {
   }
 
   async getClientProfile(id: string, user?: AuthenticatedClient) {
-    if (user && user.rol === UserRole.client && user.userId !== id)
+    if (user && user.rol === UserRole.client && user.userId !== id) {
       throw new ForbiddenException('No se puede acceder a este perfil');
-
+    }
     return this.clientsRepository.getClientProfile(id);
   }
 
@@ -58,57 +58,50 @@ export class ClientsService {
     updateClientDto: UpdateClientDto,
     user?: AuthenticatedClient,
   ) {
-    if (user && user.rol === UserRole.client && user.userId !== id) {
+    // Un cliente solo puede editar su propio perfil
+    if (user?.rol === UserRole.client && user.userId !== id) {
       throw new ForbiddenException('No se puede modificar este perfil');
     }
 
-    if (updateClientDto.newPassword && !updateClientDto.currentPassword) {
-      throw new ForbiddenException(
-        'La contraseña actual es requerida para cambiar la contraseña',
-      );
-    }
-
+    // Si quiere cambiar contraseña, validar flujo de password
     if (updateClientDto.newPassword) {
-      const clientData = await this.clientsRepository.getClientProfile(id);
+      if (!updateClientDto.currentPassword) {
+        throw new BadRequestException(
+          'La contraseña actual es requerida para cambiar la contraseña',
+        );
+      }
 
+      const clientData = await this.clientsRepository.getClientProfile(id);
       if (!clientData) {
         throw new NotFoundException('Cliente no encontrado');
       }
 
-      // Validar contraseña actual con Supabase Auth
-      if (!updateClientDto.currentPassword) {
-        throw new BadRequestException(
-          'La contraseña actual es requerida para actualizar el perfil',
-        );
+      const email = clientData.email;
+      if (!email) {
+        throw new BadRequestException('El cliente no tiene email registrado.');
       }
 
       const isValidPassword = await this.validatePasswordWithSupabase(
-        clientData.email,
+        email,
         updateClientDto.currentPassword,
       );
-
       if (!isValidPassword) {
         throw new ForbiddenException('La contraseña actual es incorrecta');
       }
 
-      // Actualizar contraseña en Supabase Auth
-      if (updateClientDto.newPassword) {
-        await this.updatePasswordInSupabase(updateClientDto.newPassword);
-        console.log('✅ Contraseña actualizada en Supabase Auth');
-      }
+      await this.updatePasswordInSupabase(updateClientDto.newPassword);
 
-      // Limpiar campos de contraseña del DTO (NO se guardan en PostgreSQL)
-      const { currentPassword, newPassword, ...updateData } = updateClientDto;
-      updateClientDto = updateData as UpdateClientDto;
+      // Limpiar campos sensibles antes de persistir cambios de perfil
+      const { currentPassword, newPassword, ...rest } = updateClientDto;
+      updateClientDto = rest as UpdateClientDto;
     }
 
-    
     // Actualizar solo datos de perfil en PostgreSQL
     return this.clientsRepository.updateClientProfile(id, updateClientDto);
   }
 
   async deleteClientProfile(id: string, user?: AuthenticatedClient) {
-    // Verificar permisos: el cliente puede eliminar su propio perfil o un admin puede eliminar cualquier perfil
+    // El cliente puede eliminar su propio perfil; un admin puede eliminar cualquiera
     if (user) {
       const isOwner = user.userId === id;
       const isAdmin = user.rol === UserRole.admin;
@@ -119,7 +112,6 @@ export class ClientsService {
         );
       }
     }
-    
     return this.clientsRepository.deleteClientProfile(id);
   }
 
