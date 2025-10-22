@@ -32,7 +32,7 @@ export abstract class User {
   @Column()
   name!: string;
 
-  @Column({ nullable: false })
+  @Column({ nullable: true })
   birthDate!: string;
 
   @Column({ unique: true })
@@ -41,10 +41,10 @@ export abstract class User {
   @Column()
   externalAuthId!: string;
 
-  @Column({ nullable: false })
+  @Column({ nullable: true })
   address!: string;
 
-  @Column({ nullable: false })
+  @Column({ nullable: true })
   phone!: string;
 
   @Column({
