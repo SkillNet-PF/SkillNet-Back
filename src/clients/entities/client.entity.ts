@@ -5,10 +5,6 @@ import { subscriptions } from 'src/subscription/entities/subscription.entity';
 import { Column, ChildEntity, ManyToOne, JoinColumn } from 'typeorm';
 import { Appointment } from 'src/appointments/entities/appointment.entity';
 
-// ===== CÓDIGO ORIGINAL (COMENTADO PARA ROLLBACK) =====
-// @ChildEntity({ name: 'CLIENTS' })
-// ===== FIN CÓDIGO ORIGINAL =====
-
 @ChildEntity('client')
 export class Client extends User {
   // Hereda de User: userId, imgProfile, name, birthDate, email, externalAuthId, address, phone, rol, isActive
