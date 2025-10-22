@@ -17,6 +17,7 @@ import { Categories } from '../categories/entities/categories.entity';
 import { Status } from './entities/status.enum';
 import { ActivityLogService } from 'src/admin/activityLog.service';
 
+import { MailService } from 'src/mail/mail.service'
 
 
 @Injectable()
@@ -41,12 +42,14 @@ export class AppointmentsService {
 
     
     
+    private readonly mailService: MailService,
+    
   ){}
 
   async createAppointment(createAppointmentDto: CreateAppointmentDto, user) {
     const authUser = await this.userRepository.findOne({
       where: { userId: user.userId,
-       },
+        },
     });
 
     if (!authUser) throw new NotFoundException('user not found');
@@ -90,7 +93,7 @@ export class AppointmentsService {
 
 
     if (providerFound.category.CategoryID !== categoryFound.CategoryID) throw new BadRequestException(`the provider does not have the category ${category}`)
-   
+    
     //convierto la fecha en un dia de la semana
     const appointmentDay = appointmentDateType.toLocaleDateString(
       'es-ES', 
@@ -141,6 +144,18 @@ export class AppointmentsService {
 
     //creamos el log
     await this.activityLogService.create(authUser, 'Agendó un turno')
+
+    try {
+    await this.mailService.sendAppointmentConfirmation(
+      client.email,        
+      client.name,         
+      appointmentDate,     
+      hour,                
+      providerFound.name,      
+    );
+  } catch (err) {
+    console.error('⚠️ No se pudo enviar el correo de turno:', err);
+  }
     
     return 'appointment succesfully saved'
     
@@ -170,7 +185,7 @@ export class AppointmentsService {
       .leftJoinAndSelect('appointment.Category', 'category')
       
       
-     if (authUser.rol === UserRole.client) {
+      if (authUser.rol === UserRole.client) {
       query.where('client.userId = :userId', { userId: user.userId });
     } else if (authUser.rol === UserRole.provider) {
       query.where('provider.userId = :userId', { userId: user.userId });
@@ -181,12 +196,12 @@ export class AppointmentsService {
 
     if (filters.category) {
         query.andWhere('category.Name = :category', { category: filters.category });
-     }
+      }
 
     if (filters.providerId) {
         
-       query.andWhere('provider.Name = :provider', { provider:  filters.provider });
-     }
+        query.andWhere('provider.Name = :provider', { provider:  filters.provider });
+      }
     
     query.orderBy('appointment.AppointmentDate', 'DESC');
 
@@ -259,6 +274,19 @@ export class AppointmentsService {
       client.servicesLeft = client.servicesLeft + 1
       await this.userRepository.update({userId: client.userId}, client)
       await this.activityLogService.create(authUser, 'Cancelo un turno')
+
+      // 🔹 ENVIO DE CORREO DE CANCELACION
+  try {
+    await this.mailService.sendAppointmentCancellation(
+      client.email,               // correo del cliente
+      client.name,                // nombre del cliente
+      appointment.AppointmentDate.toISOString(), // fecha del turno
+      appointment.hour,           // hora del turno
+      appointment.UserProvider.name // nombre del proveedor
+    );
+  } catch (err) {
+    console.error('⚠️ No se pudo enviar el correo de cancelación del turno:', err); // 🔹 manejo de error
+  }
     };
 
     //confirma el appointment solo para proveedor
