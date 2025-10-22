@@ -6,9 +6,11 @@ export class RegisterClientDto extends RegisterDto {
   // Forzar el rol como client
   //   rol: UserRole.client = UserRole.client;
 
+  @IsOptional()
   @IsString()
-  paymentMethod!: string; // "tarjeta_credito", "paypal", "transferencia"
+  paymentMethod?: string; // "tarjeta_credito", "paypal", "transferencia"
 
+  @IsOptional()
   @IsString()
-  subscription!: string; // "basic", "standard", "premium"
+  subscription?: string; // "basic", "standard", "premium"
 }
