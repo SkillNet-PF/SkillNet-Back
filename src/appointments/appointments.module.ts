@@ -7,6 +7,7 @@ import { User } from 'src/auth/entities/user.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 import { Client } from 'pg';
 import { Categories } from '../categories/entities/categories.entity';
+import { MailModule } from 'src/mail/mail.module';
 import { AdminModule } from 'src/admin/admin.module';
 
 @Module({
@@ -17,6 +18,7 @@ import { AdminModule } from 'src/admin/admin.module';
       ServiceProvider,
       Client,
       Categories,
+      MailModule
     ]),
     AdminModule
   ],
