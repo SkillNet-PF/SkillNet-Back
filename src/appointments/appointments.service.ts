@@ -41,7 +41,7 @@ export class AppointmentsService {
     private readonly activityLogService: ActivityLogService,
 
     
-    private readonly categoryRepository: Repository<Categories>,
+    
     private readonly mailService: MailService,
     
   ){}
@@ -49,7 +49,7 @@ export class AppointmentsService {
   async createAppointment(createAppointmentDto: CreateAppointmentDto, user) {
     const authUser = await this.userRepository.findOne({
       where: { userId: user.userId,
-       },
+        },
     });
 
     if (!authUser) throw new NotFoundException('user not found');
@@ -146,12 +146,12 @@ export class AppointmentsService {
     await this.activityLogService.create(authUser, 'Agendó un turno')
 
     try {
-    await this.mailservice.sendAppointmentConfirmation(
+    await this.mailService.sendAppointmentConfirmation(
       client.email,        
       client.name,         
       appointmentDate,     
       hour,                
-      proveedor.name,      
+      providerFound.name,      
     );
   } catch (err) {
     console.error('⚠️ No se pudo enviar el correo de turno:', err);
@@ -185,7 +185,7 @@ export class AppointmentsService {
       .leftJoinAndSelect('appointment.Category', 'category')
       
       
-     if (authUser.rol === UserRole.client) {
+      if (authUser.rol === UserRole.client) {
       query.where('client.userId = :userId', { userId: user.userId });
     } else if (authUser.rol === UserRole.provider) {
       query.where('provider.userId = :userId', { userId: user.userId });
@@ -196,12 +196,12 @@ export class AppointmentsService {
 
     if (filters.category) {
         query.andWhere('category.Name = :category', { category: filters.category });
-     }
+      }
 
     if (filters.providerId) {
         
-       query.andWhere('provider.Name = :provider', { provider:  filters.provider });
-     }
+        query.andWhere('provider.Name = :provider', { provider:  filters.provider });
+      }
     
     query.orderBy('appointment.AppointmentDate', 'DESC');
 

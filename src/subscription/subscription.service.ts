@@ -4,28 +4,30 @@ import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { subscriptions } from './entities/subscription.entity';
 import { Repository } from 'typeorm';
+import { SUBSCRIPTION_PLANS } from './stripe.constants';
+
 
 @Injectable()
 export class SubscriptionService {
   constructor(
     @InjectRepository(subscriptions)
     private readonly subscriptionsRepository: Repository<subscriptions>,
-  ){}
+  ) { }
   async create(createSubscriptionDto: CreateSubscriptionDto) {
-    const {Name, Descption, monthlyServices, price} = createSubscriptionDto;
+    const { Name, Descption, monthlyServices, price } = createSubscriptionDto;
 
     if (!Name || !Descption || !monthlyServices || !price) throw new BadRequestException('All fields are required');
-    
+
 
     if (!Number(monthlyServices) || !Number(price)) throw new BadRequestException('monthlyServices and price must be numbers');
-    
+
 
     if (Number(monthlyServices) <= 0 || Number(price) <= 0) throw new BadRequestException('monthlyServices and price must be greater than 0');
-  
+
 
     const existingSubscription = await this.subscriptionsRepository.findOne({ where: { Name } });
 
-    if(existingSubscription) throw new BadRequestException('subscription already exists');
+    if (existingSubscription) throw new BadRequestException('subscription already exists');
 
     const subscription = new subscriptions();
     subscription.Name = Name;
@@ -33,32 +35,33 @@ export class SubscriptionService {
     subscription.monthlyServices = Number(monthlyServices);
     subscription.price = Number(price);
     subscription.isActive = true;
-    
+
     await this.subscriptionsRepository.save(subscription);
     return subscription;
   }
 
   async findAll() {
-    const subscriptions = await this.subscriptionsRepository.find({where:{isActive: true}});
+    const subscriptions = await this.subscriptionsRepository.find({ where: { isActive: true } });
     return subscriptions;
   }
 
   async findOne(id: string) {
-    const subscription = await this.subscriptionsRepository.findOne({ 
+    const subscription = await this.subscriptionsRepository.findOne({
       where: { SuscriptionID: id },
-  });
+    });
 
-  if (!subscription) throw new BadGatewayException('subscription not found');
+    if (!subscription) throw new BadGatewayException('subscription not found');
 
-  return subscription;}
+    return subscription;
+  }
 
   async update(id: string, updateSubscriptionDto: UpdateSubscriptionDto) {
     const subscription = await this.subscriptionsRepository.findOne({
-      
+
     })
     if (!subscription) throw new BadGatewayException('subscription not found');
 
-    const {Name, Descption, monthlyServices, price} = updateSubscriptionDto;
+    const { Name, Descption, monthlyServices, price } = updateSubscriptionDto;
 
     if (Name && typeof Name !== 'string') throw new BadRequestException('Name must be a string');
     if (Descption && typeof Descption !== 'string') throw new BadRequestException('Descption must be a string');
@@ -84,4 +87,33 @@ export class SubscriptionService {
     await this.subscriptionsRepository.save(subscription);
     return subscription;
   }
+
+  async activateSubscription(userId: string, plan: 'BASIC' | 'STANDARD' | 'PREMIUM') {
+    const planData = SUBSCRIPTION_PLANS[plan];
+
+    if (!planData) {
+      throw new BadRequestException('Invalid plan');
+    }
+
+    try {
+      console.log(`💰 Activando suscripción para usuario ${userId} con plan ${plan}`);
+
+      const newSubscription = this.subscriptionsRepository.create({
+        Name: planData.name,
+        Descption: `Plan ${planData.name} activado desde Stripe`,
+        monthlyServices: planData.monthlyServices,
+        price: planData.price,
+        isActive: true,
+      });
+
+      await this.subscriptionsRepository.save(newSubscription);
+
+      console.log('✅ Suscripción registrada correctamente en la base de datos.');
+      return { message: 'Subscription activated successfully' };
+    } catch (error) {
+      console.error('❌ Error al activar suscripción:', error.message);
+      throw new BadRequestException('Error al activar suscripción');
+    }
+  }
 }
+
