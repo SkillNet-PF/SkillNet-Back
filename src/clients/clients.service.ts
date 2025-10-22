@@ -7,7 +7,6 @@ import {
 import { UpdateClientDto } from './dto/update-client.dto';
 import { ClientsRepository } from './clients.repository';
 import { ClientFilters } from './interfaces/client-filter';
-import { Not } from 'typeorm';
 import { AuthenticatedClient } from './interfaces/authenticated-client';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
@@ -103,6 +102,7 @@ export class ClientsService {
       updateClientDto = updateData as UpdateClientDto;
     }
 
+    
     // Actualizar solo datos de perfil en PostgreSQL
     return this.clientsRepository.updateClientProfile(id, updateClientDto);
   }
@@ -119,7 +119,7 @@ export class ClientsService {
         );
       }
     }
-
+    
     return this.clientsRepository.deleteClientProfile(id);
   }
 

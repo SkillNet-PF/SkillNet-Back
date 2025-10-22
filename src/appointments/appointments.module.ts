@@ -8,6 +8,7 @@ import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/se
 import { Client } from 'pg';
 import { Categories } from '../categories/entities/categories.entity';
 import { MailModule } from 'src/mail/mail.module';
+import { AdminModule } from 'src/admin/admin.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { MailModule } from 'src/mail/mail.module';
       Categories,
       MailModule
     ]),
+    AdminModule
   ],
   controllers: [AppointmentsController],
   providers: [AppointmentsService],

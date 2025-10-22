@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   Put,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { ServiceproviderService } from './serviceprovider.service';
 import { CreateServiceproviderDto } from './dto/create-serviceprovider.dto';
@@ -14,6 +16,8 @@ import { UpdateServiceproviderDto } from './dto/update-serviceprovider.dto';
 import { Query } from '@nestjs/common';
 import { Roles } from 'src/auth/roles.decorator';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { UserRole } from 'src/common/enums/user-role.enum';
+import { RolesGuard } from 'src/guards/roles.guard';
 
 @Controller('serviceprovider')
 export class ServiceproviderController {
@@ -43,6 +47,14 @@ export class ServiceproviderController {
     return this.serviceproviderService.search(name, category);
   }
 
+  @Roles(UserRole.provider)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get('dashboard')
+  dashboard(@Req() req) {
+    const user = req.user;
+    return this.serviceproviderService.dashboard(user);
+    
+  }
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.serviceproviderService.findOne(id);
