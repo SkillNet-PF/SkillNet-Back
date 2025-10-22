@@ -5,6 +5,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { subscriptions } from './entities/subscription.entity';
 import { Repository } from 'typeorm';
 import { SUBSCRIPTION_PLANS } from './stripe.constants';
+import { User } from 'src/auth/entities/user.entity';
+import { MailService } from 'src/mail/mail.service';
 
 
 @Injectable()
@@ -12,6 +14,9 @@ export class SubscriptionService {
   constructor(
     @InjectRepository(subscriptions)
     private readonly subscriptionsRepository: Repository<subscriptions>,
+      @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    private readonly mailService: MailService,
   ) { }
   async create(createSubscriptionDto: CreateSubscriptionDto) {
     const { Name, Descption, monthlyServices, price } = createSubscriptionDto;
@@ -98,6 +103,9 @@ export class SubscriptionService {
     try {
       console.log(`💰 Activando suscripción para usuario ${userId} con plan ${plan}`);
 
+      const user = await this.userRepository.findOne({ where: { userId } });
+      if (!user) throw new BadGatewayException('User not found');
+
       const newSubscription = this.subscriptionsRepository.create({
         Name: planData.name,
         Descption: `Plan ${planData.name} activado desde Stripe`,
@@ -106,9 +114,22 @@ export class SubscriptionService {
         isActive: true,
       });
 
-      await this.subscriptionsRepository.save(newSubscription);
+        await this.subscriptionsRepository.save(newSubscription);
+      console.log('✅ Suscripción guardada correctamente en la base de datos.');
 
-      console.log('✅ Suscripción registrada correctamente en la base de datos.');
+
+    await this.mailService.sendSubscriptionConfirmation(
+        user.email,                // 📧 correo del usuario
+        user.name,                 // 👤 nombre del usuario
+        planData.name,             // 🪪 nombre del plan
+        planData.monthlyServices,  // 💼 cantidad de servicios
+        planData.price,            // 💵 precio
+      );
+
+
+      
+
+      console.log('✅ Suscripción registrada correctamente en la base de datos.y correo enviado correctamente.');
       return { message: 'Subscription activated successfully' };
     } catch (error) {
       console.error('❌ Error al activar suscripción:', error.message);
