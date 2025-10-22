@@ -41,11 +41,11 @@ export abstract class User {
   @Column()
   externalAuthId!: string;
 
-  @Column({ nullable: false })
-  address!: string;
+  @Column({ nullable: true })
+  address?: string;
 
-  @Column({ nullable: false })
-  phone!: string;
+  @Column({ nullable: true })
+  phone?: string;
 
   @Column({
     type: 'enum',
