@@ -9,7 +9,10 @@ import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([subscriptions, User]),
+    TypeOrmModule.forFeature([
+      subscriptions,
+      User
+    ]),
     ConfigModule,
     MailModule,
   ],
