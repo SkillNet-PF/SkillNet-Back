@@ -16,4 +16,19 @@ export class AdminController {
     const user = req.user;
     return this.adminService.getDashboard(user);
   }
+
+  @Get('providers')
+  getAllProviders() {
+    return this.adminService.getAllProviders();
+  }
+
+  @Get('clients')
+  getAllClients() {
+    return this.adminService.getAllClients();
+  }
+
+  @Get('incomes')
+  getIncomes() {
+    return this.adminService.getIncomes();
+  }
 }
