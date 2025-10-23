@@ -22,14 +22,12 @@ export class AdminService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Appointment)
     private readonly appointmentRepository: Repository<Appointment>,
-    @InjectRepository(Client)
-    private readonly clientRepository: Repository<Client>,
+    // @InjectRepository(Client)
+    // private readonly clientRepository: Repository<Client>,
     @InjectRepository(ServiceProvider)
     private readonly providerRepository: Repository<ServiceProvider>,
     @InjectRepository(Categories)
     private readonly categoryRepository: Repository<Categories>,
-    @InjectRepository(subscriptions)
-    private readonly subscriptionsRepository: Repository<subscriptions>,
 
 
     private readonly activityLogService: ActivityLogService
@@ -123,7 +121,7 @@ export class AdminService {
     return { Categorias, Proveedores }
   }
   async getIncomes() {
-    const clients = await this.clientRepository.find({relations: ['suscription']});
+    const clients = await this.userRepository.find({where: {rol: UserRole.client}, relations: ['suscription']}) as Client[];
     
     let Basic = 0;
     let Standar = 0;
