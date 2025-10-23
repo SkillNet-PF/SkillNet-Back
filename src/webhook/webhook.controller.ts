@@ -1,47 +1,50 @@
-// src/webhook/webhook.controller.ts
-import { Controller, Post, Req, Headers } from '@nestjs/common';
+import { Controller, Post, Req, Headers, Res } from '@nestjs/common';
 import { stripe } from 'src/subscription/stripe.config';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { SubscriptionService } from 'src/subscription/subscription.service';
 
 @Controller('webhook')
 export class WebhookController {
-    constructor(private readonly subscriptionService: SubscriptionService) {} // 🔹 inyectar servicio
+    constructor(private readonly subscriptionService: SubscriptionService) { }
 
     @Post()
-    async handleWebhook(@Req() req: Request, @Headers('stripe-signature') sig: string) {
-        // 🔹 Obtenemos la clave del webhook desde las variables de entorno
-        const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
+    async handleWebhook(
+        @Req() req: Request,
+        @Res() res: Response,
+        @Headers('stripe-signature') sig: string,
+    ) {
+        const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
         if (!endpointSecret) {
-            throw new Error('❌ STRIPE_WEBHOOK_SECRET no está definido en las variables de entorno');
+            console.error('❌ Falta STRIPE_WEBHOOK_SECRET en las variables de entorno');
+            return res.status(500).send('Webhook secret no configurado');
         }
 
         let event;
 
         try {
-            // 🔹 Verificamos la firma del webhook
+            // ⚠️ Usa req.body como Buffer sin parsear
             event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
         } catch (err) {
             console.error('⚠️ Error verificando firma del webhook:', err.message);
-            throw err;
+            return res.status(400).send(`Webhook Error: ${err.message}`);
         }
 
-        // 🔹 Evento de pago completado
+        // ✅ Cuando el pago se confirma
         if (event.type === 'checkout.session.completed') {
-            const session = event.data.object;
+            const session = event.data.object as any;
 
-            // 🔹 Metadata actualizada para 3 planes: BASIC, STANDARD, PREMIUM
-            const userId = session.metadata.userId;
-            const plan = session.metadata.plan as 'BASIC' | 'STANDARD' | 'PREMIUM';
+            const userId = session.metadata?.userId;
+            const plan = session.metadata?.plan as 'BASIC' | 'STANDARD' | 'PREMIUM';
 
             console.log(`✅ Pago confirmado para usuario ${userId}, plan ${plan}`);
 
-            // 🔹 Llamamos al servicio para activar la suscripción según el plan
-            await this.subscriptionService.activateSubscription(userId, plan);
+            if (userId && plan) {
+                await this.subscriptionService.activateSubscription(userId, plan);
+            }
         }
 
-        // 🔹 Retornamos respuesta a Stripe
-        return { received: true };
+        return res.status(200).json({ received: true });
+
     }
 }
