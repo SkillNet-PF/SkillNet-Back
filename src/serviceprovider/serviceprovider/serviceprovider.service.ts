@@ -102,22 +102,21 @@ async remove(id: string) {
 
 
   async search(name?: string, category?: string) {
-    const where: any = {where: { isActive: true }};
+    const whereConditions: any = { isActive: true };
 
     if (name) {
       // Busca proveedores cuyo nombre contenga la palabra ingresada
-      where.name = Like(`%${name}%`);
+      whereConditions.name = Like(`%${name}%`);
     }
 
     if (category) {
       // Busca proveedores cuya categoría coincida con la ingresada
-      where.category = { name: Like(`%${category}%`) };
+      whereConditions.category = { name: Like(`%${category}%`) };
     }
 
     return this.serviceprovider.find({
-      where ,
+      where: whereConditions,
       relations: ['category'], // trae categoría relacionada
-      
     });
   }
 
