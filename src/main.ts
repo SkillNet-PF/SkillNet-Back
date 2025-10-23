@@ -8,11 +8,12 @@ import { json, raw } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-app.use('/webhook', raw({ type: 'application/json' }));
+  app.use('/webhook', raw({ type: 'application/json' }));
   app.use(json());
   // Enable CORS for local Vite dev server and production environments
   const corsOrigins: (string | RegExp)[] = [];
-  if (process.env.FRONTEND_ORIGIN) corsOrigins.push(process.env.FRONTEND_ORIGIN);
+  if (process.env.FRONTEND_ORIGIN)
+    corsOrigins.push(process.env.FRONTEND_ORIGIN);
   corsOrigins.push('http://localhost:5173', 'http://127.0.0.1:5173');
   // Agregar dominio de Coolify
   corsOrigins.push('http://skillnet.72.61.129.102.sslip.io', 'https://skillnet.72.61.129.102.sslip.io');
