@@ -8,7 +8,7 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 // import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Appointment } from './entities/appointment.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { User } from 'src/auth/entities/user.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { Client } from 'src/clients/entities/client.entity';
@@ -71,26 +71,27 @@ export class AppointmentsService {
     if (!category || !appointmentDate || !hour || !notes || !provider)
       throw new BadRequestException('all required fields must be complete');
 
+    console.log(appointmentDate);
     //verifico que la fecha de emision sea posterior a la actual
-    const appointmentDateType = new Date(`${appointmentDate}T00:00:00Z`);
+    const appointmentDateType = new Date(appointmentDate);
     appointmentDateType.setMinutes(
       appointmentDateType.getMinutes() +
         appointmentDateType.getTimezoneOffset(),
     );
     const today = new Date();
-
+    
     if (appointmentDateType <= today)
       throw new BadRequestException(
-        'the appointment date must be later than the current date',
-      );
-
-    const categoryFound = await this.categoryRepository.findOneBy({
-      Name: category,
-    });
-    const providerFound = await this.providerRepository.findOne({
-      where: { name: provider, rol: UserRole.provider },
-      relations: ['category', 'schedule'],
-    });
+    'the appointment date must be later than the current date',
+  );
+  
+  const categoryFound = await this.categoryRepository.findOneBy({
+    Name: category,
+  });
+  const providerFound = await this.providerRepository.findOne({
+    where: { name: provider, rol: UserRole.provider },
+    relations: ['category', 'schedule'],
+  });
 
     if (!categoryFound) throw new NotFoundException('Category not found');
     if (!providerFound) throw new NotFoundException('Provider not found');
@@ -123,11 +124,10 @@ export class AppointmentsService {
       .createQueryBuilder('appointment')
       .leftJoin('appointment.UserProvider', 'provider')
       .where('provider.userId = :providerId', { providerId })
-      .andWhere('appointment.AppointmentDate = :appointmentDate')
+      .andWhere('appointment.AppointmentDate = :appointmentDate',{ appointmentDate: appointmentDateType })
       .andWhere('appointment.hour = :hour', { hour })
-      .andWhere('appointment.Status = :status', { status: Status.CONFIRMED })
-      .andWhere('appointment.Status = :status', { status: Status.PENDING })
-      .setParameter('appointmentDate', appointmentDateType)
+      .andWhere('appointment.Status = :status', { status: Status.CONFIRMED || Status.PENDING })
+      // .setParameter('appointmentDate', appointmentDateType)
       .getOne();
 
     if (existingAppointment)
@@ -175,7 +175,7 @@ export class AppointmentsService {
       console.error('⚠️ No se pudo enviar el correo de turno:', err);
     }
 
-    return 'appointment succesfully saved';
+    return {menssage:'appointment succesfully saved'};
   }
 
   async findUserAppointments(
@@ -393,4 +393,23 @@ export class AppointmentsService {
     await this.appointmentRepository.update({ AppointmentID: id }, appointment);
     return appointment;
   }
+
+  async getBookedHours(providerId: string, date: string): Promise<string[]> {
+  const targetDate = new Date(date);
+   targetDate.setMinutes(
+      targetDate.getMinutes() +
+        targetDate.getTimezoneOffset(),
+    );
+  const appointments = await this.appointmentRepository.find({
+    where: {
+      UserProvider: { userId: providerId },
+      AppointmentDate: targetDate,
+      Status: In([Status.CONFIRMED, Status.PENDING]),
+    },
+  });
+  console.log(appointments);
+  // devolvés solo las horas ya reservadas
+  console.log(appointments.map((a) => a.hour));
+  return appointments.map((a) => a.hour);
+}
 }

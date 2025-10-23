@@ -38,6 +38,7 @@ export class AppointmentsController {
     );
   }
 
+
   @UseGuards(JwtAuthGuard)
   @Get()
   findUserAppointmens(
@@ -67,6 +68,14 @@ export class AppointmentsController {
     const user = request.user;
     return this.appointmentsService.findOne(id, user);
   }
+
+  @Get('booked-hours/:providerId')
+async getBookedHours(
+  @Param('providerId') providerId: string,
+  @Query('date') date: string,
+) {
+  return this.appointmentsService.getBookedHours(providerId, date);
+}
 
   @UseGuards(JwtAuthGuard)
   @Put(':id')
