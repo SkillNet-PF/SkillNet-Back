@@ -13,6 +13,11 @@ export class CategoriesController {
     return this.categoriesService.create(createCategoryDto, user);
   }
 
+  @Post('bulk')
+  createMany(@Body() payload: CreateCategoryDto[]) {
+    return this.categoriesService.createMany(payload);
+  }
+
   @Get()
   findAll() {
     return this.categoriesService.findAll();

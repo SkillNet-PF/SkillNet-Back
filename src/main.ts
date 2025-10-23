@@ -7,6 +7,7 @@ import { createAuth0Middleware } from './config/auth.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  
   // Enable CORS for local Vite dev server and production environments
   const corsOrigins: (string | RegExp)[] = [];
   if (process.env.FRONTEND_ORIGIN) corsOrigins.push(process.env.FRONTEND_ORIGIN);
@@ -38,7 +39,7 @@ async function bootstrap() {
 
   const PORT = process.env.PORT || 3000;
 
-  await app.listen(PORT);
+  await app.listen(Number(PORT), '0.0.0.0');
   try {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
   } catch (error) {
