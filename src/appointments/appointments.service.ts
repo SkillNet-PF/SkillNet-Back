@@ -8,7 +8,7 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 // import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Appointment } from './entities/appointment.entity';
-import { In, Repository, Between, In } from 'typeorm';
+import { In, Repository} from 'typeorm';
 import { User } from 'src/auth/entities/user.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { Client } from 'src/clients/entities/client.entity';
