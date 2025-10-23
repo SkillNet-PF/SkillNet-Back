@@ -2,9 +2,8 @@ import { IsOptional, IsString } from 'class-validator';
 import { RegisterDto } from '../../../auth/dto/register.dto';
 
 export class ProviderRegisterDto extends RegisterDto {
-  
   @IsString()
-  serviceType: string;
+  category: string;
 
   @IsString()
   about: string;
@@ -15,5 +14,3 @@ export class ProviderRegisterDto extends RegisterDto {
   @IsString()
   horarios: string;
 }
-
-

@@ -34,8 +34,7 @@ export class Client extends User {
   @Column()
   paymentStatus: boolean;
 
-  //!Habilitar relación con appointments cuando esté la entidad
-  // @ManyToOne(() => Appointment, (appointment) => appointment.clients)
-  // @JoinColumn({ name: 'appointment_id' })
-  // appointment?: Appointment;
+  @ManyToOne(() => Appointment, (appointment) => appointment.UserClient)
+  @JoinColumn({ name: 'appointment_id' })
+  appointment?: Appointment;
 }
