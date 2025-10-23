@@ -124,20 +124,26 @@ export class AdminService {
   }
   async getIncomes() {
     const clients = await this.clientRepository.find({relations: ['suscription']});
-    const suscriptions = await this.subscriptionsRepository.find();
     
-    let ingresos = 0;
-   
-    suscriptions.forEach((subscription) => {
-      let totalPorSuscripcion ={name: subscription.Name, price: 0}
-      clients.forEach((client) => {
-        if (client.suscription?.SuscriptionID === subscription.SuscriptionID) {
-          totalPorSuscripcion.price = totalPorSuscripcion.price + subscription.price
+    let Basic = 0;
+    let Standar = 0;
+    let Premium = 0;
+    
+    clients.forEach(client => {
+      if (client.suscription) {
+        if (client.suscription.Name === 'Basic') {
+          Basic = Basic + client.suscription.price
+        } else if (client.suscription.Name === 'Standard') {
+          Standar = Standar + client.suscription.price
+        } else if (client.suscription.Name === 'Premium') {
+          Premium = Premium + client.suscription.price
         }
-      });
+      }
       
     })
+
+    const totalIncome = Basic + Standar + Premium
     
-    return ingresos;
+    return {Basic, Standar, Premium, totalIncome};
   }
 }
