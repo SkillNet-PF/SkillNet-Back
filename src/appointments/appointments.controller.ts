@@ -69,6 +69,15 @@ export class AppointmentsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('booked-hours/:providerId')
+  getBookedHours(
+    @Param('providerId') providerId: string,
+    @Query('date') date: string,
+  ) {
+    return this.appointmentsService.getBookedHours(providerId, date);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string, @Req() request) {
     const user = request.user;
