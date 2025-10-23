@@ -19,10 +19,21 @@ import { UserRole } from 'src/common/enums/user-role.enum';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { Status } from './entities/status.enum';
+import { DataMigrationService } from './data-migration.service';
 
 @Controller('appointments')
 export class AppointmentsController {
-  constructor(private readonly appointmentsService: AppointmentsService) {}
+  constructor(
+    private readonly appointmentsService: AppointmentsService,
+    private readonly dataMigrationService: DataMigrationService,
+  ) {}
+
+  // Temporary endpoint to run data migration
+  @Post('migrate-data')
+  async migrateData() {
+    await this.dataMigrationService.cleanAppointmentsData();
+    return { message: 'Data migration completed successfully' };
+  }
 
   @Roles(UserRole.client)
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -60,6 +71,22 @@ export class AppointmentsController {
       );
     }
     return this.appointmentsService.findUserAppointments(1, 5, filters, user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('my-appointments')
+  findMyAppointments(@Req() request) {
+    const user = request.user;
+    return this.appointmentsService.findUserAppointments(1, 100, {}, user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('booked-hours/:providerId')
+  getBookedHours(
+    @Param('providerId') providerId: string,
+    @Query('date') date: string,
+  ) {
+    return this.appointmentsService.getBookedHours(providerId, date);
   }
 
   @UseGuards(JwtAuthGuard)

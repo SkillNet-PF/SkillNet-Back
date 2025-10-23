@@ -14,6 +14,8 @@ app.use('/webhook', raw({ type: 'application/json' }));
   const corsOrigins: (string | RegExp)[] = [];
   if (process.env.FRONTEND_ORIGIN) corsOrigins.push(process.env.FRONTEND_ORIGIN);
   corsOrigins.push('http://localhost:5173', 'http://127.0.0.1:5173');
+  // Agregar dominio de Coolify
+  corsOrigins.push('http://skillnet.72.61.129.102.sslip.io', 'https://skillnet.72.61.129.102.sslip.io');
   app.enableCors({
     origin: corsOrigins,
     credentials: true,
