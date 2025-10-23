@@ -8,7 +8,7 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 // import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Appointment } from './entities/appointment.entity';
-import { Repository } from 'typeorm';
+import { Repository, Between, In } from 'typeorm';
 import { User } from 'src/auth/entities/user.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { Client } from 'src/clients/entities/client.entity';
@@ -392,5 +392,30 @@ export class AppointmentsService {
 
     await this.appointmentRepository.update({ AppointmentID: id }, appointment);
     return appointment;
+  }
+
+  async getBookedHours(providerId: string, date: string): Promise<string[]> {
+    try {
+      const targetDate = new Date(date);
+      const startOfDay = new Date(targetDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(targetDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const appointments = await this.appointmentRepository.find({
+        where: {
+          UserProvider: { userId: providerId },
+          AppointmentDate: Between(startOfDay, endOfDay),
+          Status: In([Status.PENDING, Status.CONFIRMED, Status.COMPLETED_PARTIAL])
+        },
+        relations: ['UserProvider']
+      });
+
+      return appointments.map(appointment => appointment.hour);
+    } catch (error) {
+      console.error('Error getting booked hours:', error);
+      return [];
+    }
   }
 }
