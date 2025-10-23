@@ -11,12 +11,11 @@ async function bootstrap() {
 app.use('/webhook', raw({ type: 'application/json' }));
   app.use(json());
   // Enable CORS for local Vite dev server and production environments
+  const corsOrigins: (string | RegExp)[] = [];
+  if (process.env.FRONTEND_ORIGIN) corsOrigins.push(process.env.FRONTEND_ORIGIN);
+  corsOrigins.push('http://localhost:5173', 'http://127.0.0.1:5173');
   app.enableCors({
-    origin: [
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      process.env.FRONTEND_ORIGIN ?? '',
-    ].filter(Boolean),
+    origin: corsOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -42,7 +41,7 @@ app.use('/webhook', raw({ type: 'application/json' }));
 
   const PORT = process.env.PORT || 3000;
 
-  await app.listen(PORT);
+  await app.listen(Number(PORT), '0.0.0.0');
   try {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
   } catch (error) {
