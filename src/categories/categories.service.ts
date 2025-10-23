@@ -34,6 +34,15 @@ export class CategoriesService {
     await this.categoriesRepository.save(category);
   }
 
+  async createMany(payload: CreateCategoryDto[]) {
+    const categories = payload.map(dto => {
+      const category = new Categories();
+      category.Name = dto.name;
+      return category;
+    });
+    return await this.categoriesRepository.save(categories);
+  }
+
   async findAll() {
     const categories = await this.categoriesRepository.find();
     return categories;
