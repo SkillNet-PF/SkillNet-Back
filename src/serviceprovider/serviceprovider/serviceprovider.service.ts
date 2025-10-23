@@ -2,7 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-  UseGuards,
+  // UseGuards, // (no se usa; si tu linter marca warning, elimínalo)
 } from '@nestjs/common';
 import { CreateServiceproviderDto } from './dto/create-serviceprovider.dto';
 import { UpdateServiceproviderDto } from './dto/update-serviceprovider.dto';
@@ -22,14 +22,13 @@ export class ServiceproviderService {
     @InjectRepository(Appointment)
     private readonly appointmentRepository: Repository<Appointment>,
   ) {}
-  // async create(createServiceProviderDto: CreateServiceproviderDto) {
 
+  // async create(createServiceProviderDto: CreateServiceproviderDto) {
   //   const provider = this.serviceprovider.create({
   //     ...createServiceProviderDto,
   //     rol: UserRole.provider,
   //     isActive: true,
   //   });
-
   //   return await this.serviceprovider.save(provider);
   // }
 
@@ -53,7 +52,7 @@ export class ServiceproviderService {
     return provider;
   }
 
-  async dashboard(user) {
+  async dashboard(user: { userId: string }) {
     const provider = await this.serviceprovider.findOne({
       where: { userId: user.userId },
       relations: ['category', 'schedule'],
@@ -62,8 +61,9 @@ export class ServiceproviderService {
     if (!provider || provider.isActive === false) {
       throw new NotFoundException(`Service provider not found`);
     }
-    if (provider.rol != UserRole.provider)
+    if (provider.rol !== UserRole.provider) {
       throw new BadRequestException('bad request');
+    }
 
     const confirmedAppointments = await this.appointmentRepository.count({
       where: {
@@ -86,8 +86,9 @@ export class ServiceproviderService {
     const provider = await this.serviceprovider.findOne({
       where: { userId: id },
     });
-    if (!provider)
+    if (!provider) {
       throw new NotFoundException(`El proveedor con id ${id} no existe`);
+    }
 
     // si viene categoryId, convertirlo a la relación category
     if ((dto as any).categoryId) {
@@ -113,21 +114,23 @@ export class ServiceproviderService {
   }
 
   async search(name?: string, category?: string) {
-    const where: any = { where: { isActive: true } };
+    // ✅ Unificación: usar un solo objeto "whereConditions"
+    const whereConditions: any = { isActive: true };
 
     if (name) {
       // Busca proveedores cuyo nombre contenga la palabra ingresada
-      where.name = Like(`%${name}%`);
+      whereConditions.name = Like(`%${name}%`);
     }
 
     if (category) {
       // Busca proveedores cuya categoría coincida con la ingresada
-      where.category = { name: Like(`%${category}%`) };
+      // (asumiendo relación ManyToOne 'category' con columna 'name')
+      whereConditions.category = { name: Like(`%${category}%`) };
     }
 
     return this.serviceprovider.find({
-      where,
-      relations: ['category'], // trae categoría relacionada
+      where: whereConditions,
+      relations: ['category'],
     });
   }
 

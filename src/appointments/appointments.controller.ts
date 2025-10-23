@@ -62,6 +62,13 @@ export class AppointmentsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('my-appointments')
+  findMyAppointments(@Req() request) {
+    const user = request.user;
+    return this.appointmentsService.findUserAppointments(1, 100, {}, user);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string, @Req() request) {
     const user = request.user;
