@@ -1,8 +1,7 @@
-
 export const STRIPE_PRICE_IDS = {
-    BASIC: 'price_basic_5000',      // 5 servicios mensuales, $5000
-    STANDARD: 'price_standard_8000', // 10 servicios mensuales, $8000
-    PREMIUM: 'price_premium_12000',  // 15 servicios mensuales, $12000
+    BASIC: 'price_1SLFS0RW4rItui38v9fYj4ws',      // Plan Basic (5 servicios)
+    STANDARD: 'price_1SLFStRW4rItui38FVl0KaN7',   // Plan Standard (10 servicios)
+    PREMIUM: 'price_1SLFTPRW4rItui38wqgyrGCA',    // Plan Premium (15 servicios)
 };
 
 export const SUBSCRIPTION_PLANS = {

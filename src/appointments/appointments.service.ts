@@ -17,7 +17,7 @@ import { Categories } from '../categories/entities/categories.entity';
 import { Status } from './entities/status.enum';
 import { ActivityLogService } from 'src/admin/activityLog.service';
 
-import { MailService } from 'src/mail/mail.service'
+import { MailService } from 'src/mail/mail.service';
 
 
 @Injectable()
@@ -40,8 +40,6 @@ export class AppointmentsService {
 
     private readonly activityLogService: ActivityLogService,
 
-    
-    
     private readonly mailService: MailService,
     
   ){}

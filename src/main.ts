@@ -4,9 +4,12 @@ import { AppModule } from './app.module';
 import { SwaggerModule } from '@nestjs/swagger/dist/swagger-module';
 import { DocumentBuilder } from '@nestjs/swagger';
 import { createAuth0Middleware } from './config/auth.config';
+import { json, raw } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+app.use('/webhook', raw({ type: 'application/json' }));
+  app.use(json());
   // Enable CORS for local Vite dev server and production environments
   app.enableCors({
     origin: [

@@ -18,8 +18,8 @@ import { AdminModule } from 'src/admin/admin.module';
       ServiceProvider,
       Client,
       Categories,
-      MailModule
     ]),
+    MailModule,
     AdminModule
   ],
   controllers: [AppointmentsController],
