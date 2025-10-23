@@ -15,7 +15,7 @@ export class Appointment {
     AppointmentID: string = uuid()
 
    
-    @ManyToOne(()=>Categories, { eager: true, nullable: false })
+    @ManyToOne(()=>Categories, { eager: true, nullable: true })
     Category: Categories;
 
     @Column({
