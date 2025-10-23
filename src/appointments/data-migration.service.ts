@@ -28,13 +28,12 @@ export class DataMigrationService {
     if (appointmentsWithoutCategory.length > 0) {
       // Get a default category or create one
       let defaultCategory = await this.categoryRepository.findOne({
-        where: { name: 'General' }
+        where: { Name: 'General' }
       });
 
       if (!defaultCategory) {
         defaultCategory = this.categoryRepository.create({
-          name: 'General',
-          description: 'Default category for appointments without specific category'
+          Name: 'General'
         });
         await this.categoryRepository.save(defaultCategory);
         console.log('✅ Created default category');
