@@ -55,15 +55,16 @@ export class AppointmentsService {
       throw new BadRequestException(
         'Must be a client to create an appointment',
       );
-    if (client.paymentStatus === false)
-      throw new BadRequestException(
-        'you must pay your services to make an appointment',
-      );
+    // Temporalmente deshabilitadas las validaciones de pago y servicios
+    // if (client.paymentStatus === false)
+    //   throw new BadRequestException(
+    //     'you must pay your services to make an appointment',
+    //   );
 
-    if (client.servicesLeft === 0)
-      throw new BadRequestException(
-        'there are no services left to make this appointment',
-      );
+    // if (client.servicesLeft === 0)
+    //   throw new BadRequestException(
+    //     'there are no services left to make this appointment',
+    //   );
 
     const { category, appointmentDate, hour, notes, provider } =
       createAppointmentDto;
@@ -79,10 +80,11 @@ export class AppointmentsService {
     );
     const today = new Date();
 
-    if (appointmentDateType <= today)
-      throw new BadRequestException(
-        'the appointment date must be later than the current date',
-      );
+    // Temporalmente deshabilitada la validación de fecha
+    // if (appointmentDateType <= today)
+    //   throw new BadRequestException(
+    //     'the appointment date must be later than the current date',
+    //   );
 
     const categoryFound = await this.categoryRepository.findOneBy({
       Name: category,
@@ -95,10 +97,11 @@ export class AppointmentsService {
     if (!categoryFound) throw new NotFoundException('Category not found');
     if (!providerFound) throw new NotFoundException('Provider not found');
 
-    if (providerFound.category.CategoryID !== categoryFound.CategoryID)
-      throw new BadRequestException(
-        `the provider does not have the category ${category}`,
-      );
+    // Temporalmente deshabilitada la validación de categoría del proveedor
+    // if (providerFound.category.CategoryID !== categoryFound.CategoryID)
+    //   throw new BadRequestException(
+    //     `the provider does not have the category ${category}`,
+    //   );
 
     //convierto la fecha en un dia de la semana
     const appointmentDay = appointmentDateType.toLocaleDateString('es-ES', {
