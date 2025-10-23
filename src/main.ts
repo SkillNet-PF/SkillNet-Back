@@ -8,9 +8,6 @@ import { createAuth0Middleware } from './config/auth.config';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-  // Set global prefix for all routes
-  app.setGlobalPrefix('api');
-  
   // Enable CORS for local Vite dev server and production environments
   const corsOrigins: (string | RegExp)[] = [];
   if (process.env.FRONTEND_ORIGIN) corsOrigins.push(process.env.FRONTEND_ORIGIN);
