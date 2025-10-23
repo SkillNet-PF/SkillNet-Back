@@ -14,9 +14,6 @@ import { subscriptions } from 'src/subscription/entities/subscription.entity';
 
 @Injectable()
 export class AdminService {
-  getAllClients() {
-    throw new Error('Method not implemented.');
-  }
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -28,14 +25,14 @@ export class AdminService {
     private readonly providerRepository: Repository<ServiceProvider>,
     @InjectRepository(Categories)
     private readonly categoryRepository: Repository<Categories>,
-
-
+    
+    
     private readonly activityLogService: ActivityLogService
     
   ){}
   async getDashboard(user) {
     const admin = await this.userRepository.findOne({where: {userId: user.userId}});
-
+    
     if (!admin) throw new Error('User not found');
     if(admin.rol !== UserRole.admin) throw new Error('User is not admin');
     
@@ -83,15 +80,15 @@ export class AdminService {
         action: log.action,
         date: log.createdAt.toLocaleDateString()})
       );
-    return ({totals, activityLog});
-  }
-  async getAllProviders() {
-     // 1️⃣ Contar cantidad de proveedores por categoría
-    const categories = await this.categoryRepository.find();
-    const proveedores = await this.providerRepository.find({ relations: ['category'] });
-
-    const Categorias: Record<string, number> = {};
-    for (const cat of categories) {
+      return ({totals, activityLog});
+    }
+    async getAllProviders() {
+      // 1️⃣ Contar cantidad de proveedores por categoría
+      const categories = await this.categoryRepository.find();
+      const proveedores = await this.providerRepository.find({ relations: ['category'] });
+      
+      const Categorias: Record<string, number> = {};
+      for (const cat of categories) {
       Categorias[cat.Name] = proveedores.filter(p => p.category?.CategoryID === cat.CategoryID).length;
     }
     
@@ -139,9 +136,12 @@ export class AdminService {
       }
       
     })
-
+    
     const totalIncome = Basic + Standar + Premium
     
     return {Basic, Standar, Premium, totalIncome};
+  }
+  getAllClients() {
+    throw new Error('Method not implemented.');
   }
 }
