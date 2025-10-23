@@ -75,36 +75,43 @@ export class AuthRepository {
     externalAuthId: string,
     userData: Partial<User>,
   ): Promise<User> {
+    // Buscar si ya existe un usuario con ese ID externo (Auth0)
     const existing = await this.findByExternalAuthId(externalAuthId);
+
     if (existing) {
+      // No sobrescribimos el rol existente para no perder permisos (admin, provider, etc.)
+      const { rol: _ignore, ...rest } = userData;
+
       switch (existing.rol) {
         case UserRole.client: {
           const mergedClient = this.clientRepository.merge(
             existing as Client,
-            userData,
+            rest,
           );
           return await this.clientRepository.save(mergedClient);
         }
         case UserRole.provider: {
           const mergedProvider = this.providerRepository.merge(
             existing as ServiceProvider,
-            userData,
+            rest,
           );
           return await this.providerRepository.save(mergedProvider);
         }
         default: {
-          const merged = this.userRepository.merge(existing, userData);
-          return await this.userRepository.save(merged);
+          const mergedUser = this.userRepository.merge(existing, rest);
+          return await this.userRepository.save(mergedUser);
         }
       }
     }
 
-    // Nuevo: crear según el rol que llega en userData (si no, cliente por defecto)
+    // Si no existe, creamos un nuevo usuario con el rol que venga en userData
     const dataWithAuth = { ...userData, externalAuthId };
 
     if (userData.rol === UserRole.provider) {
       return await this.createProvider(dataWithAuth);
     }
+
+    // Por defecto, cliente
     return await this.createClient(dataWithAuth);
   }
 

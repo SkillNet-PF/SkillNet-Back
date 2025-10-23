@@ -1,53 +1,70 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { CreateCategoryDto } from './dto/create-category.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Categories } from './entities/categories.entity';
+import { User } from 'src/auth/entities/user.entity';
+import { UserRole } from 'src/common/enums/user-role.enum';
 
 @Injectable()
 export class CategoriesService {
   constructor(
     @InjectRepository(Categories)
-    private readonly repo: Repository<Categories>,
-  ) {}
+    private readonly categoriesRepository: Repository<Categories>,
 
-  async create(createCategoryDto: CreateCategoryDto) {
-    const entity = this.repo.create({
-      Name: createCategoryDto.name,
-      isActive: createCategoryDto.isActive ?? true,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ){}
+  async create(createCategoryDto: CreateCategoryDto, user) {
+    const authUser = await this.userRepository.findOneBy({
+      userId: user.userId
+    })
+    if(!authUser) throw new NotFoundException('User not found');
+    if(authUser.rol !== UserRole.admin) throw new UnauthorizedException('You are not an admin');
+
+    const existCategory = await this.categoriesRepository.findOne({
+      where: { Name: createCategoryDto.name },
     });
-    return await this.repo.save(entity);
+    if (existCategory) {
+      throw new Error('Category already exists');
+    }
+    
+    const category = new Categories();
+    category.Name = createCategoryDto.name;
+    await this.categoriesRepository.save(category);
   }
 
-  async createMany(payload: CreateCategoryDto[]) {
-    const entities = payload.map((c) =>
-      this.repo.create({ Name: c.name, isActive: c.isActive ?? true }),
-    );
-    return await this.repo.save(entities);
+  async findAll() {
+    const categories = await this.categoriesRepository.find();
+    return categories;
   }
 
-  findAll() {
-    return this.repo.find();
+  async findOne(id: string) {
+   const category = await this.categoriesRepository.findOne({
+     where: { CategoryID: id },
+   });
   }
 
-  findOne(id: string) {
-    return this.repo.findOne({ where: { CategoryID: id } });
+  async update(id: string, updateCategoryDto: CreateCategoryDto) {
+    const category = await this.categoriesRepository.findOne({
+      where: { CategoryID: id }});
+      if(!category) throw new NotFoundException('Category not found');
+      category.Name = updateCategoryDto.name;
+      await this.categoriesRepository.save(category);
+      return category;
   }
 
-  async update(id: string, updateCategoryDto: UpdateCategoryDto) {
-    await this.repo.update(
-      { CategoryID: id },
-      {
-        Name: (updateCategoryDto as any).name,
-        isActive: (updateCategoryDto as any).isActive,
-      },
-    );
-    return this.findOne(id);
-  }
 
   async remove(id: string) {
-    await this.repo.delete({ CategoryID: id });
-    return { deleted: true };
+    const category = await this.categoriesRepository.findOne({
+      where: { CategoryID: id },
+    });
+
+    if (!category || category.isActive === false) throw new NotFoundException('Category not found');
+
+    category.isActive = false;
+    await this.categoriesRepository.save(category);
+    return category;
+
   }
 }

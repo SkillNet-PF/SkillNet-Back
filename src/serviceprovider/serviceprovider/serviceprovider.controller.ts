@@ -27,21 +27,19 @@ export class ServiceproviderController {
 
   // @Roles()
   // @UseGuards(JwtAuthGuard)
-  @Post()
-  create(@Body() createServiceproviderDto: CreateServiceproviderDto) {
-    return this.serviceproviderService.create(createServiceproviderDto);
-  }
+  // @Post()
+  // create(@Body() createServiceproviderDto: CreateServiceproviderDto) {
+  //   return this.serviceproviderService.create(createServiceproviderDto);
+  // }
 
-  // @Roles()
-  // @UseGuards(JwtAuthGuard)
+
   @Get()
   findAll() {
     return this.serviceproviderService.findAll();
   }
 
-  // @Roles()
-  // @UseGuards(JwtAuthGuard)
-  //GET /serviceproviders/search?name=Juan&category=Peluqueria (forma de poner para probar )
+
+  // GET /serviceproviders/search?name=Juan&category=Peluqueria (forma de poner para probar )
   @Get('search')
   search(@Query('name') name?: string, @Query('category') category?: string) {
     return this.serviceproviderService.search(name, category);
@@ -55,13 +53,14 @@ export class ServiceproviderController {
     return this.serviceproviderService.dashboard(user);
     
   }
+  
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.serviceproviderService.findOne(id);
   }
 
-  // @Roles()
-  // @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.admin, UserRole.provider)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -70,8 +69,8 @@ export class ServiceproviderController {
     return this.serviceproviderService.update(id, updateServiceproviderDto);
   }
 
-  // @Roles(UserRole.admin)
-  // @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Delete(':id') // solo admin
   remove(@Param('id') id: string) {
     return this.serviceproviderService.remove(id);
