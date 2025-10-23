@@ -96,14 +96,6 @@ export class AppointmentsController {
     return this.appointmentsService.findOne(id, user);
   }
 
-  @Get('booked-hours/:providerId')
-async getBookedHours(
-  @Param('providerId') providerId: string,
-  @Query('date') date: string,
-) {
-  return this.appointmentsService.getBookedHours(providerId, date);
-}
-
   @UseGuards(JwtAuthGuard)
   @Put(':id')
   update(
