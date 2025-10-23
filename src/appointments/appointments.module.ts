@@ -8,11 +8,12 @@ import { AppointmentsController } from './appointments.controller';
 import { Appointment } from './entities/appointment.entity';
 import { User } from 'src/auth/entities/user.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
-import { Client } from 'src/clients/entities/client.entity'; // ✅ ENTIDAD correcta (NO de 'pg')
+import { Client } from 'src/clients/entities/client.entity';
 import { Categories } from 'src/categories/entities/categories.entity';
+import { DataMigrationService } from './data-migration.service';
 
-import { MailModule } from 'src/mail/mail.module'; // ✅ importa módulo de mail
-import { AdminModule } from 'src/admin/admin.module'; // asegúrate que exporte ActivityLogService si lo usas
+import { MailModule } from 'src/mail/mail.module';
+import { AdminModule } from 'src/admin/admin.module';
 
 @Module({
   imports: [
@@ -20,14 +21,13 @@ import { AdminModule } from 'src/admin/admin.module'; // asegúrate que exporte 
       Appointment,
       User,
       ServiceProvider,
-      Client, // ✅ ahora es la entidad
+      Client,
       Categories,
     ]),
-    MailModule, // ✅ va aquí, fuera de forFeature
+    MailModule,
     AdminModule,
   ],
   controllers: [AppointmentsController],
-  providers: [AppointmentsService],
-  // exports: [AppointmentsService], // opcional si lo usan desde otro módulo
+  providers: [AppointmentsService, DataMigrationService],
 })
 export class AppointmentsModule {}

@@ -8,6 +8,7 @@ import { Client } from 'pg';
 import { User } from 'src/auth/entities/user.entity';
 import { ServiceProvider } from 'src/serviceprovider/serviceprovider/entities/serviceprovider.entity';
 import { ActivityLog } from './entity/activityLog.entity';
+import { Categories } from 'src/categories/entities/categories.entity';
 
 @Module({
   imports: [
@@ -16,7 +17,8 @@ import { ActivityLog } from './entity/activityLog.entity';
         User,
         ServiceProvider,
         Client,
-        ActivityLog
+        ActivityLog,
+        Categories
       ]),
     ],
   controllers: [AdminController],
