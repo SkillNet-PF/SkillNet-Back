@@ -1,11 +1,9 @@
 import { User } from 'src/auth/entities/user.entity';
 // import { suscriptions } from 'src/suscirption/entities/suscription.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { subscriptions } from 'src/subscription/entities/subscription.entity';
 import { Column, ChildEntity, ManyToOne, JoinColumn } from 'typeorm';
-
-// ===== CÓDIGO ORIGINAL (COMENTADO PARA ROLLBACK) =====
-// @ChildEntity({ name: 'CLIENTS' })
-// ===== FIN CÓDIGO ORIGINAL =====
+import { Appointment } from 'src/appointments/entities/appointment.entity';
 
 @ChildEntity('client')
 export class Client extends User {
@@ -20,9 +18,9 @@ export class Client extends User {
   paymentMethod?: string;
 
   // Relación con suscripciones (temporalmente comentada para pruebas)
-  // @ManyToOne(() => suscriptions)
-  // @JoinColumn({ name: 'suscriptionId' })
-  // suscription?: suscriptions;
+  @ManyToOne(() => subscriptions)
+  @JoinColumn({ name: 'suscriptionId' })
+  suscription?: subscriptions;
 
   @Column()
   servicesLeft: number;
@@ -36,8 +34,7 @@ export class Client extends User {
   @Column()
   paymentStatus: boolean;
 
-  // Relación con citas (temporalmente comentada para pruebas)
-
+  //!Habilitar relación con appointments cuando esté la entidad
   // @ManyToOne(() => Appointment, (appointment) => appointment.clients)
   // @JoinColumn({ name: 'appointment_id' })
   // appointment?: Appointment;

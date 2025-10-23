@@ -4,13 +4,12 @@ import {
   Column,
   OneToOne,
   TableInheritance,
+  OneToMany,
+  JoinColumn,
 } from 'typeorm';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { v4 as uuid } from 'uuid';
-
-// ===== CONFIGURACIÓN ORIGINAL (COMENTADA PARA ROLLBACK) =====
-// @TableInheritance({ column: { type: 'enum', name: 'rol' } })
-// ===== FIN CONFIGURACIÓN ORIGINAL =====
+import { ActivityLog } from 'src/admin/entity/activityLog.entity';
 
 // ===== NUEVA CONFIGURACIÓN CON DISCRIMINADOR EXPLÍCITO =====
 @Entity('users')
@@ -27,22 +26,22 @@ export abstract class User {
   imgProfile?: string;
 
   @Column()
-  name!: string;
+  name?: string;
 
-  @Column({ nullable: false })
-  birthDate!: string;
+  @Column({ nullable: true })
+  birthDate?: string;
 
   @Column({ unique: true })
-  email!: string;
+  email?: string;
 
   @Column()
   externalAuthId!: string;
 
-  @Column({ nullable: false })
-  address!: string;
+  @Column({ nullable: true })
+  address?: string;
 
-  @Column({ nullable: false })
-  phone!: string;
+  @Column({ nullable: true })
+  phone?: string;
 
   @Column({
     type: 'enum',
@@ -50,6 +49,12 @@ export abstract class User {
   })
   rol!: UserRole;
 
+  @OneToMany(()=>ActivityLog, (ActivityLog) => ActivityLog.user)
+  @JoinColumn({ name: 'activityLogs' })
+  activityLogs: ActivityLog[];
+
+
   @Column({ default: true })
   isActive!: boolean;
+
 }

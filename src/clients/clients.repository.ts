@@ -37,7 +37,7 @@ export class ClientsRepository {
     const client = await this.clientsRepository.findOne({
       where: { userId: id },
       relations: {
-        // suscription: true, // Descomentar si se implementa la relación
+        suscription: true, // Descomentar si se implementa la relación
         // providers: true, // Descomentar si se implementa la relación
         // appointments: true, // Descomentar si se implementa la relación
       },

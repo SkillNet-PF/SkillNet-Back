@@ -9,8 +9,8 @@ export default registerAs('typeorm', () => ({
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  dropSchema: true, // solo dev
-  synchronize: true,
+  dropSchema: process.env.NODE_ENV !== 'production',
+  synchronize: process.env.NODE_ENV !== 'production',
   logging: true,
   autoLoadEntities: true,
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],

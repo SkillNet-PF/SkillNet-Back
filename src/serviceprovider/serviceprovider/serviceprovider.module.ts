@@ -5,14 +5,14 @@ import { ServiceproviderController } from './serviceprovider.controller';
 import { ServiceProvider } from './entities/serviceprovider.entity';
 import { Categories } from 'src/categories/entities/categories.entity';
 import { AuthModule } from 'src/auth/auth.module';
-import { PublicServiceProviderController } from './serviceprovider.public.controller';
+import { Appointment } from 'src/appointments/entities/appointment.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ServiceProvider, Categories]),
+    TypeOrmModule.forFeature([ServiceProvider, Categories, Appointment]),
     AuthModule,
   ],
-  controllers: [ServiceproviderController, PublicServiceProviderController],
+  controllers: [ServiceproviderController],
   providers: [ServiceproviderService],
 })
 export class ServiceproviderModule {}
