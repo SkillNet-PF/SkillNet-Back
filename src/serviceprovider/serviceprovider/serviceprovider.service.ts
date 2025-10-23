@@ -18,21 +18,21 @@ export class ServiceproviderService {
     @InjectRepository(Appointment)
     private readonly appointmentRepository: Repository<Appointment>,
   ){}
-async create(createServiceProviderDto: CreateServiceproviderDto) {
+// async create(createServiceProviderDto: CreateServiceproviderDto) {
   
-  const provider = this.serviceprovider.create({
-    ...createServiceProviderDto,
-    rol: UserRole.provider, 
-    isActive: true,
-  });
+//   const provider = this.serviceprovider.create({
+//     ...createServiceProviderDto,
+//     rol: UserRole.provider, 
+//     isActive: true,
+//   });
 
-  return await this.serviceprovider.save(provider);
-}
+//   return await this.serviceprovider.save(provider);
+// }
 
 
 
   async findAll() {
-    return  this.serviceprovider.find();
+    return  this.serviceprovider.find({where: { isActive: true },relations:['category']});
   }
 
 
@@ -44,7 +44,7 @@ async create(createServiceProviderDto: CreateServiceproviderDto) {
       relations:['category','schedule']
     });
 
-    if (!provider) {
+    if (!provider|| provider.isActive === false) {
       throw new NotFoundException(`Service provider with ID ${id} not found`);
     }
 
@@ -59,7 +59,7 @@ async create(createServiceProviderDto: CreateServiceproviderDto) {
       relations:['category','schedule']
     });
 
-    if (!provider) {
+    if (!provider || provider.isActive === false) {
       throw new NotFoundException(`Service provider not found`);
     }
     if (provider.rol != UserRole.provider) throw new BadRequestException('bad request');
@@ -94,14 +94,15 @@ async remove(id: string) {
   if (!provider) {
     throw new NotFoundException(`El proveedor con id ${id} no existe`);
   }
+  provider.isActive = false;
 
-  return await this.serviceprovider.remove(provider);
+  return await this.serviceprovider.save(provider);
 }
 
 
 
   async search(name?: string, category?: string) {
-    const where: any = {};
+    const where: any = {where: { isActive: true }};
 
     if (name) {
       // Busca proveedores cuyo nombre contenga la palabra ingresada
@@ -114,8 +115,9 @@ async remove(id: string) {
     }
 
     return this.serviceprovider.find({
-      where,
+      where ,
       relations: ['category'], // trae categoría relacionada
+      
     });
   }
 
@@ -127,6 +129,7 @@ async remove(id: string) {
 ) {
   const query = this.serviceprovider
     .createQueryBuilder('provider')
+    .where('provider.isActive = :isActive', { isActive: true })
     .leftJoinAndSelect('provider.category', 'category')
     .leftJoinAndSelect('provider.schedule', 'schedule');
 

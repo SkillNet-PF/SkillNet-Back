@@ -18,7 +18,7 @@ import { Roles } from 'src/auth/roles.decorator';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
-
+import { Status } from './entities/status.enum';
 
 @Controller('appointments')
 export class AppointmentsController {
@@ -27,9 +27,15 @@ export class AppointmentsController {
   @Roles(UserRole.client)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Post()
-  createAppointment(@Body() createAppointmentDto: CreateAppointmentDto, @Req() request) {
+  createAppointment(
+    @Body() createAppointmentDto: CreateAppointmentDto,
+    @Req() request,
+  ) {
     const user = request.user;
-    return this.appointmentsService.createAppointment(createAppointmentDto, user);
+    return this.appointmentsService.createAppointment(
+      createAppointmentDto,
+      user,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
@@ -67,12 +73,16 @@ export class AppointmentsController {
   update(
     @Param('id') id: string,
     @Body() appointmentDto: UpdateAppointmentDto,
-    @Req() request
+    @Req() request,
   ) {
-    const status = appointmentDto.Status
-    console.log(status)
+    const status = appointmentDto.Status;
+    console.log(status);
     const user = request.user;
-    return this.appointmentsService.update(id, status, user);
+    // return this.appointmentsService.update(id, status, user);
+    return this.appointmentsService.update(
+      id,
+      status as unknown as Status,
+      user,
+    );
   }
-
 }
